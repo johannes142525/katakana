@@ -81,7 +81,7 @@ main{max-width:960px;margin:0 auto;padding:28px 20px 60px}
 .tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px}
 .tag-team{background:rgba(167,139,250,.15);color:#c4b5fd}
 .tag-personal{background:rgba(52,211,153,.15);color:#6ee7b7}
-.tag-runner{font-size:11px;color:var(--dim)}
+.tag-runner{font-size:11px;color:var(--text)}
 .no-ann{font-size:13px;color:var(--dim);padding:20px 0;text-align:center}
 .section-gap{margin-bottom:36px}
 .loading-text{font-size:12px;color:var(--dim);animation:blink .8s ease-in-out infinite alternate}
@@ -135,7 +135,7 @@ const CONFIG = {
 
   // Cloudflare WorkerをデプロイしたらそのURLに変更する
   // 例: "https://rta-dashboard.yourname.workers.dev"
-  workerUrl: "https://johannes.johannes142525.workers.dev",
+  workerUrl: "https://ここにWorkerのURLを貼る",
 
   refreshInterval: 300, // 5分
 
@@ -159,12 +159,6 @@ function avatarColor(name){let h=0;for(const c of name)h=(h*31+c.charCodeAt(0))&
 function initials(name){return name.slice(0,2)}
 function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
 
-/* ── ニコニコアイコンURL生成（APIなし） ── */
-function nicoIconUrl(userId) {
-  const dir = Math.floor(parseInt(userId) / 1000);
-  return `https://secure-dcdn.cdn.nimg.jp/nicoaccount/usericon/${dir}/${userId}.jpg`;
-}
-
 /* ── Worker経由でステータス取得 ── */
 async function fetchMemberStatus(m) {
   try {
@@ -184,22 +178,32 @@ async function fetchMemberStatus(m) {
           streamsUrl: `https://www.youtube.com/${m.channelHandle}/streams`,
         }
       : {
-          chUrl:    `https://www.nicovideo.jp/user/${m.userId}/live_programs?ref=watch_user_information`,
-          liveUrl:  `https://live.nicovideo.jp/watch/user/${m.userId}`,
-          iconUrl:  nicoIconUrl(m.userId),
+          chUrl:   `https://www.nicovideo.jp/user/${m.userId}/live_programs?ref=watch_user_information`,
+          liveUrl: `https://live.nicovideo.jp/watch/user/${m.userId}`,
         };
 
     return { ...m, ...links, ...d, url: d.url || links.liveUrl || links.chUrl };
   } catch(e) {
     const links = m.platform === "youtube"
       ? { chUrl: `https://www.youtube.com/${m.channelHandle}`, streamsUrl: `https://www.youtube.com/${m.channelHandle}/streams` }
-      : { chUrl: `https://www.nicovideo.jp/user/${m.userId}/live_programs?ref=watch_user_information`, liveUrl: `https://live.nicovideo.jp/watch/user/${m.userId}`, iconUrl: nicoIconUrl(m.userId) };
+      : { chUrl: `https://www.nicovideo.jp/user/${m.userId}/live_programs?ref=watch_user_information`, liveUrl: `https://live.nicovideo.jp/watch/user/${m.userId}` };
     return { ...m, ...links, live: false, error: true, url: links.liveUrl || links.chUrl };
   }
 }
 
 async function fetchAllStatuses() {
-  return await Promise.all(CONFIG.members.map(fetchMemberStatus));
+  const statuses = await Promise.all(CONFIG.members.map(fetchMemberStatus));
+  // ニコニコメンバーのアイコンを並行取得
+  await Promise.all(statuses.map(async (m) => {
+    if (m.platform === "niconico" && !m.iconUrl) {
+      try {
+        const r = await fetch(`${CONFIG.workerUrl}/nico/icon?userId=${encodeURIComponent(m.userId)}`, { signal: AbortSignal.timeout(8000) });
+        const d = await r.json();
+        if (d.iconUrl) m.iconUrl = d.iconUrl;
+      } catch(e) { /* アイコン取得失敗は無視 */ }
+    }
+  }));
+  return statuses;
 }
 
 /* ── メンバーカード描画 ── */
@@ -218,7 +222,7 @@ function renderMembers(members) {
     // アバター：画像があれば表示、なければイニシャル
     const iconUrl = m.iconUrl || null;
     const avatarHtml = iconUrl
-      ? `<div class="avatar"><img src="${esc(iconUrl)}" alt="${esc(m.name)}" loading="lazy" onerror="this.parentNode.innerHTML='${initials(m.name)}';this.parentNode.style.background='${bg}';this.parentNode.style.color='${fg}'"></div>`
+      ? `<div class="avatar" data-bg="${bg}" data-fg="${fg}" data-init="${initials(m.name)}"><img src="${esc(iconUrl)}" alt="${esc(m.name)}" loading="lazy" onerror="var p=this.parentNode;p.innerHTML=p.dataset.init;p.style.background=p.dataset.bg;p.style.color=p.dataset.fg"></div>`
       : `<div class="avatar" style="background:${bg};color:${fg}">${initials(m.name)}</div>`;
 
     const platBadge = m.platform === "youtube"
@@ -239,8 +243,8 @@ function renderMembers(members) {
       const links = m.platform === "youtube"
         ? `<a class="ch-link" href="${esc(m.chUrl)}" target="_blank" rel="noopener">↗ チャンネル</a>
            <a class="ch-link" href="${esc(m.streamsUrl)}" target="_blank" rel="noopener">🎬 配信一覧</a>`
-        : `<a class="ch-link" href="${esc(m.liveUrl)}" target="_blank" rel="noopener">▶ 直近の配信</a>
-           <a class="ch-link" href="${esc(m.chUrl)}" target="_blank" rel="noopener">↗ ユーザーページ</a>`;
+        : `<a class="ch-link" href="${esc(m.chUrl)}" target="_blank" rel="noopener">↗ ユーザーページ</a>
+           <a class="ch-link" href="${esc(m.liveUrl)}" target="_blank" rel="noopener">▶ 直近の配信</a>`;
       body = `<div class="offline-text">配信していません${err}</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${links}</div>`;
     }
