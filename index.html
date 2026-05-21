@@ -5,170 +5,70 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RTAチーム 配信ダッシュボード</title>
 <style>
-/* ── リセット & 変数 ─────────────────────── */
 :root {
-  --bg:      #0d0c1d;
-  --bg2:     #13122a;
-  --card:    #1a1835;
-  --card-h:  #221f42;
-  --border:  rgba(255,255,255,0.07);
-  --text:    #eeecfc;
-  --muted:   #8885aa;
-  --dim:     #4e4c6a;
-  --purple:  #7c6af7;
-  --purple2: rgba(124,106,247,0.18);
-  --live:    #22c55e;
-  --live2:   rgba(34,197,94,0.14);
-  --yt:      #ef4444;
-  --nc:      #f97316;
-  --radius:  12px;
+  --bg:#0d0c1d;--bg2:#13122a;--card:#1a1835;--card-h:#221f42;
+  --border:rgba(255,255,255,0.07);--text:#eeecfc;--muted:#8885aa;--dim:#4e4c6a;
+  --purple:#7c6af7;--purple2:rgba(124,106,247,0.18);
+  --live:#22c55e;--live2:rgba(34,197,94,0.14);
+  --yt:#ef4444;--nc:#f97316;--radius:12px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{
-  background:var(--bg);color:var(--text);
-  font-family:-apple-system,"Hiragino Sans","Yu Gothic UI",Meiryo,sans-serif;
-  font-size:14px;line-height:1.6;min-height:100vh;
-}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,"Hiragino Sans","Yu Gothic UI",Meiryo,sans-serif;font-size:14px;line-height:1.6;min-height:100vh}
 a{color:inherit;text-decoration:none}
-
-/* ── ヘッダー ─────────────────────────────── */
-header{
-  background:var(--bg2);border-bottom:1px solid var(--border);
-  padding:0 24px;display:flex;align-items:center;
-  justify-content:space-between;height:56px;position:sticky;top:0;z-index:10;
-}
-.logo{font-size:16px;font-weight:700;letter-spacing:.04em;
-  background:linear-gradient(135deg,#a78bfa,#60a5fa);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:10}
+.logo{font-size:16px;font-weight:700;letter-spacing:.04em;background:linear-gradient(135deg,#a78bfa,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .header-meta{display:flex;align-items:center;gap:16px}
-.refresh-btn{
-  display:flex;align-items:center;gap:6px;
-  font-size:12px;color:var(--muted);
-  background:transparent;border:1px solid var(--border);
-  border-radius:8px;padding:5px 12px;cursor:pointer;
-  transition:background .15s,color .15s;
-}
+.refresh-btn{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:8px;padding:5px 12px;cursor:pointer;transition:background .15s,color .15s}
 .refresh-btn:hover{background:var(--card);color:var(--text)}
 .countdown-text{font-size:12px;color:var(--dim)}
-
-/* ── メインレイアウト ─────────────────────── */
 main{max-width:960px;margin:0 auto;padding:28px 20px 60px}
-
-/* ── セクションタイトル ────────────────────── */
-.section-hd{
-  display:flex;align-items:center;gap:10px;
-  margin-bottom:16px;
-}
+.section-hd{display:flex;align-items:center;gap:10px;margin-bottom:16px}
 .section-hd h2{font-size:15px;font-weight:600;letter-spacing:.02em}
-.section-hd .pill{
-  font-size:11px;font-weight:700;padding:2px 8px;
-  border-radius:20px;background:var(--live2);color:var(--live);
-}
-
-/* ── ライブステータス ─────────────────────── */
-.stat-bar{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
-  gap:10px;margin-bottom:28px;
-}
-.stat-card{
-  background:var(--card);border:1px solid var(--border);
-  border-radius:10px;padding:12px 16px;
-}
+.section-hd .pill{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--live2);color:var(--live)}
+.stat-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:28px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px}
 .stat-card .num{font-size:22px;font-weight:700;color:var(--text)}
 .stat-card .num.green{color:var(--live)}
 .stat-card .lbl{font-size:11px;color:var(--muted);margin-top:2px}
-
-/* ── メンバーカード ─────────────────────────── */
-.member-grid{
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-  gap:12px;margin-bottom:40px;
-}
-.member-card{
-  background:var(--card);border:1px solid var(--border);
-  border-radius:var(--radius);padding:16px;
-  transition:background .15s;position:relative;overflow:hidden;
-  cursor:default;
-}
+.member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:40px}
+.member-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;transition:background .15s;position:relative;overflow:hidden}
 .member-card.live{border-color:rgba(34,197,94,.35)}
-.member-card.live::before{
-  content:"";position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,var(--live),#4ade80);
-}
+.member-card.live::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--live),#4ade80)}
 .member-card:hover{background:var(--card-h)}
 .card-row1{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-.avatar{
-  width:40px;height:40px;border-radius:50%;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  font-size:13px;font-weight:700;
-}
+.avatar{width:40px;height:40px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
 .card-info{flex:1;min-width:0}
-.member-name{font-size:14px;font-weight:600;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.platform-badge{
-  display:inline-flex;align-items:center;gap:4px;
-  font-size:10px;font-weight:700;padding:2px 7px;
-  border-radius:20px;margin-top:3px;letter-spacing:.03em;
-}
+.member-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.platform-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;margin-top:3px;letter-spacing:.03em}
 .badge-yt{background:rgba(239,68,68,.15);color:#fca5a5}
 .badge-nc{background:rgba(249,115,22,.15);color:#fdba74}
 .live-dot-wrap{display:flex;align-items:center;gap:5px;flex-shrink:0}
 .live-dot{width:8px;height:8px;border-radius:50%}
-.live-dot.on{background:var(--live)}
+.live-dot.on{background:var(--live);animation:pulse 1.8s ease-in-out infinite}
 .live-dot.off{background:var(--dim)}
-.live-dot.on{animation:pulse 1.8s ease-in-out infinite}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.5)}50%{box-shadow:0 0 0 5px rgba(34,197,94,0)}}
 .live-label{font-size:11px;font-weight:700}
 .live-label.on{color:var(--live)}
 .live-label.off{color:var(--dim)}
-
-.stream-box{
-  border-top:1px solid var(--border);padding-top:10px;
-}
-.stream-title{
-  font-size:13px;color:var(--text);line-height:1.4;margin-bottom:6px;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-}
+.stream-box{border-top:1px solid var(--border);padding-top:10px}
+.stream-title{font-size:13px;color:var(--text);line-height:1.4;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .stream-meta{display:flex;justify-content:space-between;align-items:center}
 .game-name{font-size:11px;color:var(--muted)}
 .viewer-ct{font-size:12px;font-weight:600;color:var(--live)}
-.watch-link{
-  display:inline-flex;align-items:center;gap:5px;
-  margin-top:10px;font-size:12px;font-weight:600;
-  color:var(--live);border:1px solid rgba(34,197,94,.3);
-  border-radius:8px;padding:5px 12px;
-  transition:background .15s;
-}
+.watch-link{display:inline-flex;align-items:center;gap:5px;margin-top:10px;font-size:12px;font-weight:600;color:var(--live);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:5px 12px;transition:background .15s}
 .watch-link:hover{background:var(--live2)}
 .offline-text{font-size:12px;color:var(--dim);padding-top:10px;border-top:1px solid var(--border)}
-.ch-link{
-  display:inline-flex;align-items:center;gap:4px;
-  margin-top:6px;font-size:11px;color:var(--muted);
-  border:1px solid var(--border);border-radius:6px;padding:3px 8px;
-}
+.ch-link{display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:11px;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:3px 8px}
 .ch-link:hover{color:var(--text);background:var(--card-h)}
-
-/* ── お知らせ ─────────────────────────────── */
 .filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-.filter-btn{
-  font-size:12px;padding:4px 14px;border-radius:20px;
-  background:transparent;border:1px solid var(--border);
-  color:var(--muted);cursor:pointer;transition:all .15s;
-}
+.filter-btn{font-size:12px;padding:4px 14px;border-radius:20px;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .15s}
 .filter-btn:hover{border-color:var(--purple);color:var(--purple)}
 .filter-btn.active{background:var(--purple2);border-color:var(--purple);color:var(--text)}
-
 .ann-list{display:flex;flex-direction:column;gap:10px}
-.ann-card{
-  background:var(--card);border:1px solid var(--border);
-  border-radius:var(--radius);padding:14px 16px;
-  display:flex;gap:14px;
-}
+.ann-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;gap:14px}
 .ann-card.type-team{border-left:3px solid #a78bfa}
 .ann-card.type-personal{border-left:3px solid #34d399}
-.ann-icon{
-  width:36px;height:36px;border-radius:50%;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;font-size:15px;
-}
+.ann-icon{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px}
 .icon-team{background:rgba(167,139,250,.15);color:#c4b5fd}
 .icon-personal{background:rgba(52,211,153,.15);color:#6ee7b7}
 .ann-body{flex:1;min-width:0}
@@ -181,23 +81,14 @@ main{max-width:960px;margin:0 auto;padding:28px 20px 60px}
 .tag-team{background:rgba(167,139,250,.15);color:#c4b5fd}
 .tag-personal{background:rgba(52,211,153,.15);color:#6ee7b7}
 .tag-runner{font-size:11px;color:var(--dim)}
-
 .no-ann{font-size:13px;color:var(--dim);padding:20px 0;text-align:center}
-
-/* ── セクション区切り ─────────────────────── */
 .section-gap{margin-bottom:36px}
-
-/* ── ステータス不明時 ─────────────────────── */
-.unknown-label{font-size:11px;color:var(--dim)}
 .loading-text{font-size:12px;color:var(--dim);animation:blink .8s ease-in-out infinite alternate}
 @keyframes blink{from{opacity:.4}to{opacity:1}}
-
-/* ── フッター ─────────────────────────────── */
 footer{text-align:center;font-size:11px;color:var(--dim);padding:24px}
 </style>
 </head>
 <body>
-
 <header>
   <span class="logo" id="team-logo">RTAチーム 配信ダッシュボード</span>
   <div class="header-meta">
@@ -205,41 +96,23 @@ footer{text-align:center;font-size:11px;color:var(--dim);padding:24px}
     <button class="refresh-btn" onclick="refresh()">↺ 今すぐ更新</button>
   </div>
 </header>
-
 <main>
-
-  <!-- ── 配信ステータス ── -->
   <div class="section-gap">
     <div class="section-hd">
       <h2>📡 メンバー配信状況</h2>
       <span class="pill" id="live-pill">確認中…</span>
     </div>
-
     <div class="stat-bar">
-      <div class="stat-card">
-        <div class="num green" id="stat-live">—</div>
-        <div class="lbl">配信中</div>
-      </div>
-      <div class="stat-card">
-        <div class="num" id="stat-members">—</div>
-        <div class="lbl">メンバー数</div>
-      </div>
-      <div class="stat-card">
-        <div class="num green" id="stat-viewers">—</div>
-        <div class="lbl">総視聴者数</div>
-      </div>
+      <div class="stat-card"><div class="num green" id="stat-live">—</div><div class="lbl">配信中</div></div>
+      <div class="stat-card"><div class="num" id="stat-members">—</div><div class="lbl">メンバー数</div></div>
+      <div class="stat-card"><div class="num green" id="stat-viewers">—</div><div class="lbl">総視聴者数</div></div>
     </div>
-
     <div class="member-grid" id="member-grid">
       <div class="loading-text" style="padding:20px 0">配信状況を確認中…</div>
     </div>
   </div>
-
-  <!-- ── お知らせ ── -->
   <div class="section-gap">
-    <div class="section-hd">
-      <h2>📢 お知らせ・スケジュール</h2>
-    </div>
+    <div class="section-hd"><h2>📢 お知らせ・スケジュール</h2></div>
     <div class="filter-row">
       <button class="filter-btn active" onclick="filterAnn('all',this)">すべて</button>
       <button class="filter-btn" onclick="filterAnn('チーム',this)">チームイベント</button>
@@ -249,296 +122,159 @@ footer{text-align:center;font-size:11px;color:var(--dim);padding:24px}
       <div class="loading-text" style="padding:20px 0">お知らせを読み込み中…</div>
     </div>
   </div>
-
 </main>
 <footer>© RTAチーム ダッシュボード</footer>
 
 <script>
 /* ================================================================
-   ★★★ 設定ファイル — ここを編集してください ★★★
+   ★★★ 設定 — WorkerのURLだけ編集してください ★★★
    ================================================================ */
 const CONFIG = {
-  teamName: "カタカナ",
+  teamName: "DQRTAチーム",
 
-  // YouTube Data API v3 キー
-  // 取得方法: https://console.cloud.google.com → APIとサービス → YouTube Data API v3を有効化
-  youtubeApiKey: "AIzaSyAOfIqMWQ54nOVsKXlkGy-vhdb93Di5w-0",
+  // Cloudflare WorkerをデプロイしたらそのURLに変更する
+  // 例: "https://rta-dashboard.yourname.workers.dev"
+  workerUrl: "https://johannes.johannes142525.workers.dev",
 
-  // Googleスプレッドシートの公開CSV URL
-  // スプレッドシートを開く → ファイル → 共有 → 「リンクを知っている全員」に変更
-  // 次に: ファイル → ダウンロード → CSVを選ぶ際のURLの末尾を export?format=csv に変更
-  sheetsUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSDfzTcEV3C4SfL47YJeUHc73ax7Bo3NSdRFToEm_VSmSWDUyUuARMc5tv0MnJhmQ/pub?gid=475833627&single=true&output=csv",
+  refreshInterval: 300, // 5分
 
-  // 自動更新間隔（秒）
-  refreshInterval: 300,
-
-  // メンバーリスト
-  // platform: "youtube" or "niconico"
-  // youtube の場合 → channelHandle: "@チャンネル名" (@ をつける)
-  // niconico の場合 → userId: "ユーザーID番号"
   members: [
-    { name:"ヨハネス",  game:"ドラゴンクエストVII Reimagined", platform:"niconico", userId:"36994719" },
-    { name:"ユジン",    game:"HD-2D版 ドラゴンクエストI",      platform:"niconico", userId:"59165"    },
-    { name:"ラフ",      game:"ドラゴンクエストIV(FC)",          platform:"youtube",  channelHandle:"@rafu-RTA" },
-    { name:"ペテア",    game:"ドラゴンクエストVI(SFC)",         platform:"niconico", userId:"14147684" },
-    { name:"スッシィ",  game:"ドラゴンクエストV(SFC)",          platform:"youtube",  channelHandle:"@ずっしい" },
-    { name:"タイドノ",  game:"ドラゴンクエストII(SFC)",         platform:"niconico", userId:"39187"    },
-    { name:"ダイダマル", game:"ドラゴンクエストIII(SFC)",       platform:"niconico", userId:"6793126"  },
+    { name:"ヨハネス",   game:"ドラゴンクエストVII Reimagined", platform:"niconico", userId:"36994719" },
+    { name:"ユジン",     game:"HD-2D版 ドラゴンクエストI",      platform:"niconico", userId:"59165"    },
+    { name:"ラフ",       game:"ドラゴンクエストIV(FC)",          platform:"youtube",  channelHandle:"@rafu-RTA" },
+    { name:"ペテア",     game:"ドラゴンクエストVI(SFC)",         platform:"niconico", userId:"14147684" },
+    { name:"スッシィ",   game:"ドラゴンクエストV(SFC)",          platform:"youtube",  channelHandle:"@ずっしい" },
+    { name:"タイドノ",   game:"ドラゴンクエストII(SFC)",         platform:"niconico", userId:"39187"    },
+    { name:"ダイダマル",  game:"ドラゴンクエストIII(SFC)",       platform:"niconico", userId:"6793126"  },
   ],
 };
 /* ================================================================ */
 
-// アバター色リスト（名前から自動割り当て）
 const AVATAR_COLORS = [
   ["#3730a3","#a5b4fc"],["#065f46","#6ee7b7"],["#7c2d12","#fca5a5"],
   ["#6b21a8","#d8b4fe"],["#0c4a6e","#7dd3fc"],["#713f12","#fde68a"],["#4c1d95","#c4b5fd"],
 ];
-function avatarColor(name) {
-  let h = 0; for (const c of name) h = (h*31+c.charCodeAt(0))&0xffff;
-  return AVATAR_COLORS[h % AVATAR_COLORS.length];
-}
-function initials(name) { return name.slice(0,2); }
+function avatarColor(name){let h=0;for(const c of name)h=(h*31+c.charCodeAt(0))&0xffff;return AVATAR_COLORS[h%AVATAR_COLORS.length]}
+function initials(name){return name.slice(0,2)}
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
 
-/* ── YouTube ─────────────────────────────────────────── */
-// チャンネルハンドル → チャンネルID をキャッシュ
-const ytChannelCache = {};
-
-async function getYouTubeChannelId(handle) {
-  const h = handle.replace(/^@/,"");
-  if (ytChannelCache[h]) return ytChannelCache[h];
-  const url = `https://www.googleapis.com/youtube/v3/channels?part=id&forHandle=${encodeURIComponent(h)}&key=${CONFIG.youtubeApiKey}`;
-  const r = await fetch(url);
-  const d = await r.json();
-  const id = d.items?.[0]?.id || null;
-  if (id) ytChannelCache[h] = id;
-  return id;
-}
-
-async function getYouTubeLiveStatus(member) {
+/* ── Worker経由でステータス取得 ── */
+async function fetchMemberStatus(m) {
   try {
-    const channelId = await getYouTubeChannelId(member.channelHandle);
-    if (!channelId) throw new Error("channel not found");
-
-    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&eventType=live&type=video&key=${CONFIG.youtubeApiKey}`;
-    const r = await fetch(url);
+    let url;
+    if (m.platform === "youtube") {
+      url = `${CONFIG.workerUrl}/youtube/live?channelHandle=${encodeURIComponent(m.channelHandle)}`;
+    } else {
+      url = `${CONFIG.workerUrl}/nico/live?userId=${encodeURIComponent(m.userId)}`;
+    }
+    const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
     const d = await r.json();
 
-    if (d.items && d.items.length > 0) {
-      const item = d.items[0];
-      return {
-        live: true,
-        title: item.snippet.title,
-        videoId: item.id.videoId,
-        url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
-        viewers: null, // search API では視聴者数非対応
-      };
-    }
-    return {
-      live: false,
-      url: `https://www.youtube.com/${member.channelHandle}`,
-    };
+    // チャンネルリンク（オフライン時）
+    const chUrl = m.platform === "youtube"
+      ? `https://www.youtube.com/${m.channelHandle}`
+      : `https://live.nicovideo.jp/watch/user/${m.userId}`;
+
+    return { ...m, ...d, url: d.url || chUrl };
   } catch(e) {
-    return { live: false, error: true, url: `https://www.youtube.com/${member.channelHandle}` };
+    const chUrl = m.platform === "youtube"
+      ? `https://www.youtube.com/${m.channelHandle}`
+      : `https://live.nicovideo.jp/watch/user/${m.userId}`;
+    return { ...m, live: false, error: true, url: chUrl };
   }
 }
 
-/* ── ニコ生 ──────────────────────────────────────────── */
-// CORS プロキシ経由でニコ生ページの __NEXT_DATA__ を解析
-// ※ 安定運用には Cloudflare Workers の利用推奨（README参照）
-const CORS_PROXY = "https://corsproxy.io/?url=";
-
-async function getNicoLiveStatus(member) {
-  const watchUrl = `https://live.nicovideo.jp/watch/user/${member.userId}`;
-  try {
-    const r = await fetch(CORS_PROXY + encodeURIComponent(watchUrl), { signal: AbortSignal.timeout(8000) });
-    if (!r.ok) throw new Error("fetch failed");
-    const html = await r.text();
-
-    // __NEXT_DATA__ JSON を抽出
-    const m = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
-    if (!m) throw new Error("no next data");
-    const data = JSON.parse(m[1]);
-    const str = JSON.stringify(data);
-
-    // ライブ中を示すキーワードを探す
-    const isLive = str.includes('"ON_AIR"') || str.includes('"status":"RELEASED"');
-    if (!isLive) return { live: false, url: watchUrl };
-
-    // タイトル・視聴者数を探す
-    const props = data?.props?.pageProps;
-    const title = props?.program?.title
-      || props?.nicoliveProgramData?.title
-      || props?.socialGroup?.name
-      || "";
-    const viewers = props?.program?.statistics?.watchCount
-      || props?.nicoliveProgramData?.statistics?.watchCount
-      || null;
-    const lvId = props?.program?.id || props?.nicoliveProgramData?.id || null;
-    const liveUrl = lvId ? `https://live.nicovideo.jp/watch/${lvId}` : watchUrl;
-
-    return { live: true, title, viewers, url: liveUrl };
-  } catch(e) {
-    // プロキシが失敗した場合はリンクのみ表示
-    return { live: false, error: true, url: watchUrl };
-  }
-}
-
-/* ── メンバーステータス取得 ────────────────────────── */
 async function fetchAllStatuses() {
-  return await Promise.all(CONFIG.members.map(async (m, i) => {
-    try {
-      const status = m.platform === "youtube"
-        ? await getYouTubeLiveStatus(m)
-        : await getNicoLiveStatus(m);
-      return { ...m, ...status, idx: i };
-    } catch {
-      return { ...m, live: false, error: true, idx: i,
-        url: m.platform === "youtube"
-          ? `https://www.youtube.com/${m.channelHandle}`
-          : `https://live.nicovideo.jp/watch/user/${m.userId}` };
-    }
-  }));
+  return await Promise.all(CONFIG.members.map(fetchMemberStatus));
 }
 
-/* ── メンバーカード描画 ──────────────────────────────── */
+/* ── メンバーカード描画 ── */
 function renderMembers(members) {
   const live = members.filter(m => m.live);
   const offline = members.filter(m => !m.live);
-  const totalViewers = live.reduce((s,m) => s + (m.viewers||0), 0);
-
+  const totalViewers = live.reduce((s,m) => s+(m.viewers||0), 0);
   document.getElementById("stat-live").textContent = live.length;
   document.getElementById("stat-members").textContent = members.length;
   document.getElementById("stat-viewers").textContent = totalViewers ? totalViewers.toLocaleString() : live.length ? "—" : "0";
   document.getElementById("live-pill").textContent = live.length > 0 ? `${live.length}人配信中` : "配信なし";
 
   const sorted = [...live, ...offline];
-  const grid = document.getElementById("member-grid");
-  grid.innerHTML = sorted.map(m => {
-    const [bg, fg] = avatarColor(m.name);
+  document.getElementById("member-grid").innerHTML = sorted.map(m => {
+    const [bg,fg] = avatarColor(m.name);
     const platBadge = m.platform === "youtube"
       ? `<span class="platform-badge badge-yt">▶ YouTube</span>`
       : `<span class="platform-badge badge-nc">● ニコ生</span>`;
-
     let body = "";
     if (m.live) {
-      body = `
-        <div class="stream-box">
-          ${m.title ? `<div class="stream-title">${esc(m.title)}</div>` : ""}
-          <div class="stream-meta">
-            <div class="game-name">${esc(m.game)}</div>
-            ${m.viewers ? `<div class="viewer-ct">👥 ${m.viewers.toLocaleString()}</div>` : ""}
-          </div>
-          <a class="watch-link" href="${esc(m.url)}" target="_blank" rel="noopener">▶ 今すぐ視聴</a>
-        </div>`;
+      body = `<div class="stream-box">
+        ${m.title ? `<div class="stream-title">${esc(m.title)}</div>` : ""}
+        <div class="stream-meta">
+          <div class="game-name">${esc(m.game)}</div>
+          ${m.viewers ? `<div class="viewer-ct">👥 ${m.viewers.toLocaleString()}</div>` : ""}
+        </div>
+        <a class="watch-link" href="${esc(m.url)}" target="_blank" rel="noopener">▶ 今すぐ視聴</a>
+      </div>`;
     } else {
-      const linkLabel = m.platform === "youtube" ? "チャンネルを見る" : "ユーザーページ";
-      const errorNote = m.error ? `<div style="font-size:11px;color:var(--dim);margin-top:4px">ステータス取得に失敗（リンクより確認）</div>` : "";
-      body = `
-        <div class="offline-text">配信していません${errorNote}</div>
-        <a class="ch-link" href="${esc(m.url)}" target="_blank" rel="noopener">↗ ${linkLabel}</a>`;
+      const label = m.platform === "youtube" ? "チャンネルを見る" : "ユーザーページ";
+      const err = m.error ? `<div style="font-size:11px;color:var(--dim);margin-top:4px">ステータス取得に失敗（リンクより確認）</div>` : "";
+      body = `<div class="offline-text">配信していません${err}</div>
+        <a class="ch-link" href="${esc(m.url)}" target="_blank" rel="noopener">↗ ${label}</a>`;
     }
-
-    return `
-    <div class="member-card ${m.live ? "live" : ""}">
+    return `<div class="member-card ${m.live ? "live" : ""}">
       <div class="card-row1">
         <div class="avatar" style="background:${bg};color:${fg}">${initials(m.name)}</div>
         <div class="card-info">
-          <div class="member-name">${esc(m.name)}</div>
-          ${platBadge}
+          <div class="member-name">${esc(m.name)}</div>${platBadge}
         </div>
         <div class="live-dot-wrap">
           <div class="live-dot ${m.live ? "on" : "off"}"></div>
           <span class="live-label ${m.live ? "on" : "off"}">${m.live ? "LIVE" : "—"}</span>
         </div>
-      </div>
-      ${body}
+      </div>${body}
     </div>`;
   }).join("");
 }
 
-/* ── Googleスプレッドシート読み込み ─────────────────── */
+/* ── Sheets（Worker経由）── */
 async function fetchAnnouncements() {
-  if (!CONFIG.sheetsUrl || CONFIG.sheetsUrl.includes("YOUR_")) {
-    renderAnnouncements(SAMPLE_ANN);
-    return;
-  }
   try {
-    const r = await fetch(CONFIG.sheetsUrl, { cache:"no-store" });
+    const r = await fetch(`${CONFIG.workerUrl}/sheets`, { cache:"no-store" });
     const text = await r.text();
-    const ann = parseCSV(text);
-    renderAnnouncements(ann);
+    renderAnnouncements(parseCSV(text));
   } catch(e) {
-    renderAnnouncements(SAMPLE_ANN);
+    renderAnnouncements([]);
   }
 }
 
-// CSVパース（クォート対応）
 function parseCSV(text) {
   const lines = text.replace(/\r/g,"").split("\n");
   const result = [];
-  // 最初の4行はヘッダー（タイトル・注記・列名・ヒント）なのでスキップ
   for (let i = 4; i < lines.length; i++) {
     const row = splitCSVLine(lines[i]);
     if (!row[0]) continue;
-    const status = row[0].trim();
-    if (status !== "表示") continue; // 表示のみ
-    result.push({
-      type:   row[1]?.trim() || "",
-      title:  row[2]?.trim() || "",
-      date:   row[3]?.trim() || "",
-      time:   row[4]?.trim() || "",
-      runner: row[5]?.trim() || "",
-      desc:   row[6]?.trim() || "",
-    });
+    if (row[0].trim() !== "表示") continue;
+    result.push({ type:row[1]?.trim()||"", title:row[2]?.trim()||"", date:row[3]?.trim()||"", time:row[4]?.trim()||"", runner:row[5]?.trim()||"", desc:row[6]?.trim()||"" });
   }
   return result;
 }
 
 function splitCSVLine(line) {
-  const fields = []; let cur = ""; let inQ = false;
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (c === '"') { inQ = !inQ; }
-    else if (c === ',' && !inQ) { fields.push(cur); cur = ""; }
-    else cur += c;
-  }
-  fields.push(cur);
-  return fields;
+  const fields=[];let cur="";let inQ=false;
+  for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'){inQ=!inQ}else if(c===','&&!inQ){fields.push(cur);cur=""}else cur+=c}
+  fields.push(cur);return fields;
 }
 
-// サンプルデータ（スプレッドシート未設定時に表示）
-const SAMPLE_ANN = [
-  { type:"チーム", title:"チーム決起集会",                date:"5/25", time:"21:00", runner:"全員",                desc:"大会直前！メンバー全員で顔合わせ＆最終確認。ニコ生にて配信予定。" },
-  { type:"個人",   title:"ドラゴンクエストV — 通し練習", date:"5/22", time:"20:00", runner:"スッシィ",            desc:"本番想定でタイムアタックします。目標は2:30切り。" },
-  { type:"個人",   title:"ドラゴンクエストIV — ルート確認", date:"5/21", time:"21:30", runner:"ラフ",            desc:"新ルートの検証配信。コメントで意見もらえると助かります。" },
-  { type:"個人",   title:"ドラゴンクエストVI — 並走練習", date:"5/23", time:"22:00", runner:"ペテア / ヨハネス", desc:"競り合いを想定したペース配分の練習。" },
-];
-
 let allAnn = [];
-
-/* ── お知らせ描画 ────────────────────────────────────── */
-function renderAnnouncements(ann, filterType = "all") {
+function renderAnnouncements(ann, filterType="all") {
   allAnn = ann;
-  const list = document.getElementById("ann-list");
   const filtered = filterType === "all" ? ann : ann.filter(a => a.type === filterType);
-
-  if (!filtered.length) {
-    list.innerHTML = `<div class="no-ann">お知らせはありません</div>`;
-    return;
-  }
-
+  const list = document.getElementById("ann-list");
+  if (!filtered.length) { list.innerHTML = `<div class="no-ann">お知らせはありません</div>`; return; }
   list.innerHTML = filtered.map(a => {
     const isTeam = a.type === "チーム";
-    const icon = isTeam ? "🏁" : "🎮";
-    const tagClass = isTeam ? "tag-team" : "tag-personal";
-    const tagLabel = isTeam ? "チーム" : "個人";
-    const cardClass = isTeam ? "type-team" : "type-personal";
-    const iconClass = isTeam ? "icon-team" : "icon-personal";
     const when = [a.date, a.time].filter(Boolean).join(" ");
-
-    return `
-    <div class="ann-card ${cardClass}">
-      <div class="ann-icon ${iconClass}">${icon}</div>
+    return `<div class="ann-card ${isTeam ? "type-team" : "type-personal"}">
+      <div class="ann-icon ${isTeam ? "icon-team" : "icon-personal"}">${isTeam ? "🏁" : "🎮"}</div>
       <div class="ann-body">
         <div class="ann-top">
           <div class="ann-title">${esc(a.title)}</div>
@@ -546,7 +282,7 @@ function renderAnnouncements(ann, filterType = "all") {
         </div>
         ${a.desc ? `<div class="ann-desc">${esc(a.desc)}</div>` : ""}
         <div class="ann-meta">
-          <span class="tag ${tagClass}">${tagLabel}</span>
+          <span class="tag ${isTeam ? "tag-team" : "tag-personal"}">${isTeam ? "チーム" : "個人"}</span>
           ${a.runner ? `<span class="tag-runner">👤 ${esc(a.runner)}</span>` : ""}
         </div>
       </div>
@@ -560,22 +296,14 @@ function filterAnn(type, btn) {
   renderAnnouncements(allAnn, type);
 }
 
-/* ── ユーティリティ ──────────────────────────────────── */
-function esc(s) {
-  return String(s||"")
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-}
-
-/* ── 自動更新 ────────────────────────────────────────── */
+/* ── 自動更新 ── */
 let timer;
 function startCountdown() {
   clearInterval(timer);
   let s = CONFIG.refreshInterval;
   document.getElementById("sec").textContent = s;
   timer = setInterval(() => {
-    // タブが非表示のときはカウントを進めない
-    if (document.hidden) return;
+    if (document.hidden) return; // タブ非表示中は停止
     s--;
     const el = document.getElementById("sec");
     if (el) el.textContent = s;
@@ -585,14 +313,10 @@ function startCountdown() {
 
 async function refresh() {
   startCountdown();
-  const [members, ] = await Promise.all([
-    fetchAllStatuses(),
-    fetchAnnouncements(),
-  ]);
+  const [members] = await Promise.all([fetchAllStatuses(), fetchAnnouncements()]);
   renderMembers(members);
 }
 
-/* ── 初回起動 ────────────────────────────────────────── */
 document.getElementById("team-logo").textContent = `${CONFIG.teamName} 配信ダッシュボード`;
 refresh();
 </script>
