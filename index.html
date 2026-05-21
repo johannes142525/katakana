@@ -135,7 +135,7 @@ const CONFIG = {
 
   // Cloudflare WorkerをデプロイしたらそのURLに変更する
   // 例: "https://rta-dashboard.yourname.workers.dev"
-  workerUrl: "https://johannes.johannes142525.workers.dev",
+  workerUrl: "https://ここにWorkerのURLを貼る",
 
   refreshInterval: 300, // 5分
 
@@ -193,16 +193,13 @@ async function fetchMemberStatus(m) {
 
 async function fetchAllStatuses() {
   const statuses = await Promise.all(CONFIG.members.map(fetchMemberStatus));
-  // ニコニコメンバーのアイコンを並行取得
-  await Promise.all(statuses.map(async (m) => {
-    if (m.platform === "niconico" && !m.iconUrl) {
-      try {
-        const r = await fetch(`${CONFIG.workerUrl}/nico/icon?userId=${encodeURIComponent(m.userId)}`, { signal: AbortSignal.timeout(8000) });
-        const d = await r.json();
-        if (d.iconUrl) m.iconUrl = d.iconUrl;
-      } catch(e) { /* アイコン取得失敗は無視 */ }
+  // ニコニコメンバーのアイコンURLをWorkerプロキシ経由で設定
+  statuses.forEach(m => {
+    if (m.platform === "niconico") {
+      // Workerが画像をプロキシ返却するエンドポイントをiconUrlとして設定
+      m.iconUrl = `${CONFIG.workerUrl}/nico/icon?userId=${encodeURIComponent(m.userId)}`;
     }
-  }));
+  });
   return statuses;
 }
 
