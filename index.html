@@ -135,16 +135,20 @@ const CONFIG = {
 
   // Cloudflare WorkerをデプロイしたらそのURLに変更する
   // 例: "https://rta-dashboard.yourname.workers.dev"
-  workerUrl: "https://johannes.johannes142525.workers.dev",
+  workerUrl: "https://ここにWorkerのURLを貼る",
 
   refreshInterval: 300, // 5分
 
+  // YouTubeメンバーのiconUrl: チャンネルページのアイコンを右クリック or 開発者ツールで取得したURLを貼る
+  // ニコニコメンバーはuserIdから自動生成するので不要
   members: [
     { name:"ヨハネス",   game:"ドラゴンクエストVII Reimagined", platform:"niconico", userId:"36994719" },
     { name:"ユジン",     game:"HD-2D版 ドラゴンクエストI",      platform:"niconico", userId:"59165"    },
-    { name:"ラフ",       game:"ドラゴンクエストIV(FC)",          platform:"youtube",  channelHandle:"@rafu-RTA" },
+    { name:"ラフ",       game:"ドラゴンクエストIV(FC)",          platform:"youtube",  channelHandle:"@rafu-RTA",
+      iconUrl:"https://yt3.googleusercontent.com/TYJrGjVpNIKRmFsq7uVmbL_xFmLIrl2oBxwIgGPndLCnBS4vppbbtbfQlGRFRgt3pUZxVbzQVQ=s160-c-k-c0x00ffffff-no-rj" },
     { name:"ペテア",     game:"ドラゴンクエストVI(SFC)",         platform:"niconico", userId:"14147684" },
-    { name:"スッシィ",   game:"ドラゴンクエストV(SFC)",          platform:"youtube",  channelHandle:"@すっしぃ" },
+    { name:"スッシィ",   game:"ドラゴンクエストV(SFC)",          platform:"youtube",  channelHandle:"@すっしぃ",
+      iconUrl:"https://yt3.googleusercontent.com/Xl3BiCAdbjvlqpp9ZImFATN3y4fr6Dtjd3nMkNmgCvujU_X9z5lX5elNGiG1Ksky-mER2PSg=s160-c-k-c0x00ffffff-no-rj" },
     { name:"タイドノ",   game:"ドラゴンクエストII(SFC)",         platform:"niconico", userId:"39187"    },
     { name:"ダイダマル",  game:"ドラゴンクエストIII(SFC)",       platform:"niconico", userId:"6793126"  },
   ],
@@ -193,12 +197,13 @@ async function fetchMemberStatus(m) {
 
 async function fetchAllStatuses() {
   const statuses = await Promise.all(CONFIG.members.map(fetchMemberStatus));
-  // ニコニコメンバーのアイコンURLをWorkerプロキシ経由で設定
+  // ニコニコメンバーのアイコンURLをCDNから直接計算（floor(userId/10000)）
   statuses.forEach(m => {
-    if (m.platform === "niconico") {
-      // Workerが画像をプロキシ返却するエンドポイントをiconUrlとして設定
-      m.iconUrl = `${CONFIG.workerUrl}/nico/icon?userId=${encodeURIComponent(m.userId)}`;
+    if (m.platform === "niconico" && !m.iconUrl) {
+      const dir = Math.floor(parseInt(m.userId) / 10000);
+      m.iconUrl = `https://secure-dcdn.cdn.nimg.jp/nicoaccount/usericon/${dir}/${m.userId}.jpg`;
     }
+    // YouTubeメンバーはCONFIGのiconUrlを使用（APIで取得できた場合はそちらを優先）
   });
   return statuses;
 }
