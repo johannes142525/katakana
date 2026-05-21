@@ -30,7 +30,7 @@ main{max-width:960px;margin:0 auto;padding:28px 20px 60px}
 .stat-card .num{font-size:22px;font-weight:700;color:var(--text)}
 .stat-card .num.green{color:var(--live)}
 .stat-card .lbl{font-size:11px;color:var(--muted);margin-top:2px}
-.member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:40px}
+.member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:40px}
 .member-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;transition:background .15s;position:relative;overflow:hidden}
 .member-card.live{border-color:rgba(34,197,94,.35)}
 .member-card.live::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--live),#4ade80)}
@@ -105,7 +105,7 @@ footer{text-align:center;font-size:11px;color:var(--dim);padding:24px}
     <div class="stat-bar">
       <div class="stat-card"><div class="num green" id="stat-live">—</div><div class="lbl">配信中</div></div>
       <div class="stat-card"><div class="num" id="stat-members">—</div><div class="lbl">メンバー数</div></div>
-      <div class="stat-card"><div class="num green" id="stat-viewers">—</div><div class="lbl">総視聴者数</div></div>
+
     </div>
     <div class="member-grid" id="member-grid">
       <div class="loading-text" style="padding:20px 0">配信状況を確認中…</div>
@@ -134,7 +134,7 @@ const CONFIG = {
 
   // Cloudflare WorkerをデプロイしたらそのURLに変更する
   // 例: "https://rta-dashboard.yourname.workers.dev"
-  workerUrl: "https://johannes.johannes142525.workers.dev",
+  workerUrl: "https://ここにWorkerのURLを貼る",
 
   refreshInterval: 300, // 5分
 
@@ -173,13 +173,13 @@ async function fetchMemberStatus(m) {
     // チャンネルリンク（オフライン時）
     const chUrl = m.platform === "youtube"
       ? `https://www.youtube.com/${m.channelHandle}`
-      : `https://live.nicovideo.jp/watch/user/${m.userId}`;
+      : `https://www.nicovideo.jp/user/${m.userId}/live_programs?ref=watch_user_information`;
 
     return { ...m, ...d, url: d.url || chUrl };
   } catch(e) {
     const chUrl = m.platform === "youtube"
       ? `https://www.youtube.com/${m.channelHandle}`
-      : `https://live.nicovideo.jp/watch/user/${m.userId}`;
+      : `https://www.nicovideo.jp/user/${m.userId}/live_programs?ref=watch_user_information`;
     return { ...m, live: false, error: true, url: chUrl };
   }
 }
@@ -195,7 +195,6 @@ function renderMembers(members) {
   const totalViewers = live.reduce((s,m) => s+(m.viewers||0), 0);
   document.getElementById("stat-live").textContent = live.length;
   document.getElementById("stat-members").textContent = members.length;
-  document.getElementById("stat-viewers").textContent = totalViewers ? totalViewers.toLocaleString() : live.length ? "—" : "0";
   document.getElementById("live-pill").textContent = live.length > 0 ? `${live.length}人配信中` : "配信なし";
 
   const sorted = [...live, ...offline];
