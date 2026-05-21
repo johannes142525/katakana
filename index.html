@@ -186,7 +186,8 @@ async function fetchMemberStatus(m) {
           liveUrl: `https://live.nicovideo.jp/watch/user/${m.userId}`,
         };
 
-    return { ...m, ...links, ...d, url: d.url || links.liveUrl || links.chUrl };
+    // iconUrl: APIで取得できた場合優先、なければCONFIG記載のURLを使用
+    return { ...m, ...links, ...d, iconUrl: d.iconUrl || m.iconUrl || null, url: d.url || links.liveUrl || links.chUrl };
   } catch(e) {
     const links = m.platform === "youtube"
       ? { chUrl: `https://www.youtube.com/${m.channelHandle}`, streamsUrl: `https://www.youtube.com/${m.channelHandle}/streams` }
