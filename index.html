@@ -574,6 +574,8 @@ function startCountdown() {
   let s = CONFIG.refreshInterval;
   document.getElementById("sec").textContent = s;
   timer = setInterval(() => {
+    // タブが非表示のときはカウントを進めない
+    if (document.hidden) return;
     s--;
     const el = document.getElementById("sec");
     if (el) el.textContent = s;
