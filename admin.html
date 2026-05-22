@@ -121,23 +121,23 @@ select{padding:7px 8px}
     <!-- URLインポート -->
     <div class="section">
       <h2>🔗 URLからメンバーをインポート</h2>
-      <div class="import-row">
-        <input id="import-url" type="url" placeholder="配信ページ・チャンネル・ユーザーページのURLを貼り付け">
-        <button class="btn btn-import" onclick="importFromUrl()">インポート</button>
-      </div>
-      <div class="import-hint">
-        対応URL例：<br>
-        ・ https://live.nicovideo.jp/watch/user/<b>39187</b><br>
-        ・ https://www.nicovideo.jp/user/<b>39187</b>/live_programs<br>
-        ・ https://www.youtube.com/<b>@rafu-RTA</b><br>
-        ・ https://www.youtube.com/<b>@rafu-RTA</b>/streams
+      <textarea id="import-area" rows="5" placeholder="1行につき1人。URLのみ、またはカンマ区切りで「名前,担当作品,URL」の形式で入力&#10;例）タイドノ,ドラゴンクエストII(SFC),https://live.nicovideo.jp/watch/user/39187&#10;例）ラフ,ドラゴンクエストIV(FC),https://www.youtube.com/@rafu-RTA&#10;例）https://www.nicovideo.jp/user/39187（URLのみも可）" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;font-family:inherit;outline:none;resize:vertical;line-height:1.6"></textarea>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+        <div class="import-hint">
+          URL形式：nicovideo.jp/user/<b>ID</b>　／　live.nicovideo.jp/watch/user/<b>ID</b>　／　youtube.com/<b>@チャンネル</b>
+        </div>
+        <button class="btn btn-import" onclick="importFromUrl()" style="flex-shrink:0;margin-left:12px">インポート</button>
       </div>
       <div id="import-msg" class="msg" style="margin-top:10px;margin-bottom:0"></div>
     </div>
 
     <!-- メンバー管理 -->
     <div class="section">
-      <h2>👥 メンバー管理</h2>
+      <h2>👥 メンバー管理
+        <span style="font-size:11px;font-weight:400;color:var(--dim);margin-left:8px">
+          📌 アイコンはAPIから自動取得。取得できない場合のみ丸アイコンをクリックしてアップロード
+        </span>
+      </h2>
       <div class="col-head">
         <span>名前</span>
         <span>担当作品</span>
@@ -148,9 +148,7 @@ select{padding:7px 8px}
       </div>
       <div id="member-list"></div>
       <button class="btn btn-add" onclick="addMember()">＋ メンバーを追加</button>
-      <div class="note" style="margin-top:10px">
-        📌 アイコン画像はAPIから自動取得されます。取得できない場合のみ丸いアイコンをクリックして画像をアップロードしてください（ニコ生・YouTubeどちらも同様）。
-      </div>
+
     </div>
 
     <hr class="divider">
@@ -267,51 +265,70 @@ function uploadIcon(i, input) {
   reader.readAsDataURL(file);
 }
 
-// ── URLインポート ─────────────────────────────────────────────
+// ── URLインポート（複数行・CSV対応） ────────────────────────────
+function parseOneLine(line) {
+  // CSV: 名前,担当作品,URL  または  URL のみ
+  const parts = line.split(",").map(s => s.trim());
+  let name = "", game = "", urlStr = "";
+  if (parts.length >= 3) {
+    name   = parts[0];
+    game   = parts[1];
+    urlStr = parts.slice(2).join(","); // URLにカンマが含まれる場合を考慮
+  } else {
+    urlStr = parts[0];
+  }
+
+  // URL判定
+  let platform = null, idVal = null;
+  const nicoMatch = urlStr.match(/nicovideo\.jp\/(?:user|watch\/user)\/(\d+)/);
+  if (nicoMatch) { platform = "niconico"; idVal = nicoMatch[1]; }
+  if (!platform) {
+    const ytMatch = urlStr.match(/youtube\.com\/(@[^/?&\s]+)/);
+    if (ytMatch) { platform = "youtube"; idVal = ytMatch[1]; }
+  }
+  if (!platform || !idVal) return null;
+  return { name, game, platform, idVal };
+}
+
 function importFromUrl() {
-  const raw = document.getElementById("import-url").value.trim();
+  const raw = document.getElementById("import-area").value.trim();
   if (!raw) { showMsg("import-msg", "URLを入力してください", "err"); return; }
 
-  let platform = null, idVal = null;
+  const lines   = raw.split("\n").map(l => l.trim()).filter(Boolean);
+  let added = 0, skipped = 0, failed = 0;
+  const failedLines = [];
 
-  // ニコニコ判定
-  const nicoMatch = raw.match(/nicovideo\.jp\/(?:user|watch\/user)\/(\d+)/);
-  if (nicoMatch) { platform = "niconico"; idVal = nicoMatch[1]; }
+  for (const line of lines) {
+    const parsed = parseOneLine(line);
+    if (!parsed) { failed++; failedLines.push(line); continue; }
 
-  // YouTube判定
-  if (!platform) {
-    const ytHandle = raw.match(/youtube\.com\/(@[^/?&\s]+)/);
-    if (ytHandle) { platform = "youtube"; idVal = ytHandle[1]; }
-  }
+    // 重複チェック
+    const exists = config.members.some(m =>
+      (m.platform === "niconico" && m.userId        === parsed.idVal) ||
+      (m.platform === "youtube"  && m.channelHandle === parsed.idVal)
+    );
+    if (exists) { skipped++; continue; }
 
-  if (!platform || !idVal) {
-    showMsg("import-msg", "対応していないURLです。ニコニコ・YouTubeのURLを確認してください。", "err");
-    return;
-  }
-
-  // 重複チェック
-  const exists = config.members.some(m =>
-    (m.platform === "niconico" && m.userId === idVal) ||
-    (m.platform === "youtube"  && m.channelHandle === idVal)
-  );
-  if (exists) { showMsg("import-msg", "このメンバーはすでに追加されています。", "err"); return; }
-
-  // メンバー追加
-  if (platform === "niconico") {
-    config.members.push({ name:"", game:"", platform:"niconico", userId: idVal });
-  } else {
-    config.members.push({ name:"", game:"", platform:"youtube", channelHandle: idVal });
+    if (parsed.platform === "niconico") {
+      config.members.push({ name: parsed.name, game: parsed.game, platform:"niconico", userId: parsed.idVal });
+    } else {
+      config.members.push({ name: parsed.name, game: parsed.game, platform:"youtube", channelHandle: parsed.idVal });
+    }
+    added++;
   }
 
   renderMembers();
-  document.getElementById("import-url").value = "";
+  document.getElementById("import-area").value = "";
 
-  const label = platform === "niconico" ? `ニコ生 ユーザーID: ${idVal}` : `YouTube: ${idVal}`;
-  showMsg("import-msg", `✅ 追加しました（${label}）。名前・担当作品を入力してください。`, "ok");
+  let msg = `✅ ${added}人を追加しました。`;
+  if (skipped) msg += ` ${skipped}人はすでに登録済みのためスキップ。`;
+  if (failed)  msg += ` ${failed}行は読み取り失敗（対応URLか確認を）。`;
+  showMsg("import-msg", msg, added > 0 ? "ok" : "err");
 
-  // 追加した行にスクロール
-  const rows = document.querySelectorAll(".member-row");
-  rows[rows.length-1]?.scrollIntoView({ behavior:"smooth", block:"center" });
+  if (added > 0) {
+    const rows = document.querySelectorAll(".member-row");
+    rows[rows.length-1]?.scrollIntoView({ behavior:"smooth", block:"center" });
+  }
 }
 
 // ── 保存 ─────────────────────────────────────────────────────
