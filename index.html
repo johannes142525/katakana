@@ -59,6 +59,7 @@ main{max-width:960px;margin:0 auto;padding:28px 20px 60px}
 .watch-link{display:inline-flex;align-items:center;gap:5px;margin-top:10px;font-size:12px;font-weight:600;color:var(--live);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:5px 12px;transition:background .15s}
 .watch-link:hover{background:var(--live2)}
 .offline-text{font-size:12px;color:var(--dim);padding-top:10px;border-top:1px solid var(--border)}
+.offline-game{color:var(--muted);margin-left:4px}
 .ch-link{display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:11px;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:3px 8px}
 .ch-link:hover{color:var(--text);background:var(--card-h)}
 .filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
@@ -85,6 +86,12 @@ main{max-width:960px;margin:0 auto;padding:28px 20px 60px}
 .no-ann{font-size:13px;color:var(--dim);padding:20px 0;text-align:center}
 .section-gap{margin-bottom:36px}
 .loading-text{font-size:12px;color:var(--dim);animation:blink .8s ease-in-out infinite alternate}
+.event-banner{background:linear-gradient(135deg,rgba(124,106,247,0.15),rgba(96,165,250,0.1));border:1px solid rgba(124,106,247,0.3);border-radius:var(--radius);padding:14px 20px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.event-name{font-size:13px;color:var(--muted)}
+.event-count{font-size:22px;font-weight:700;color:#a78bfa}
+.event-count span{font-size:13px;font-weight:400;color:var(--muted);margin-left:4px}
+.event-today{font-size:22px;font-weight:700;color:var(--live)}
+.event-done{font-size:14px;color:var(--dim)}
 @keyframes blink{from{opacity:.4}to{opacity:1}}
 footer{text-align:center;font-size:11px;color:var(--dim);padding:24px}
 </style>
@@ -98,6 +105,14 @@ footer{text-align:center;font-size:11px;color:var(--dim);padding:24px}
   </div>
 </header>
 <main>
+  <div id="event-banner" style="display:none" class="event-banner">
+    <div>
+      <div class="event-name" id="event-name-label"></div>
+      <div id="event-count-display"></div>
+    </div>
+    <div id="event-date-label" style="font-size:12px;color:var(--dim)"></div>
+  </div>
+
   <div class="section-gap">
     <div class="section-hd">
       <h2>📡 メンバー配信状況</h2>
@@ -135,9 +150,13 @@ const CONFIG = {
 
   // Cloudflare WorkerをデプロイしたらそのURLに変更する
   // 例: "https://rta-dashboard.yourname.workers.dev"
-  workerUrl: "https://johannes.johannes142525.workers.dev",
+  workerUrl: "https://ここにWorkerのURLを貼る",
 
-  refreshInterval: 60, // 1分（ニコ生検知用。YouTube はPubSubで即時反映） // 5分
+  refreshInterval: 60, // 1分（ニコ生検知用。YouTube はPubSubで即時反映）
+
+  // 大会本番日程（"YYYY-MM-DD" 形式。不要な場合は null に）
+  eventDate: "2026-06-01",
+  eventName: "大会本番", // 5分
 
   // YouTubeメンバーのiconUrl: チャンネルページのアイコンを右クリック or 開発者ツールで取得したURLを貼る
   // ニコニコメンバーはuserIdから自動生成するので不要
@@ -277,7 +296,6 @@ function renderMembers(members) {
       body = `<div class="stream-box">
         ${m.title ? `<div class="stream-title">${esc(m.title)}</div>` : ""}
         <div class="stream-meta">
-          <div class="game-name">${esc(m.game)}</div>
           ${m.viewers ? `<div class="viewer-ct">👥 ${m.viewers.toLocaleString()}</div>` : ""}
         </div>
         <a class="watch-link" href="${esc(m.url)}" target="_blank" rel="noopener">▶ 今すぐ視聴</a>
@@ -289,7 +307,9 @@ function renderMembers(members) {
            <a class="ch-link" href="${esc(m.streamsUrl)}" target="_blank" rel="noopener">🎬 配信一覧</a>`
         : `<a class="ch-link" href="${esc(m.chUrl)}" target="_blank" rel="noopener">↗ ユーザーページ</a>
            <a class="ch-link" href="${esc(m.liveUrl)}" target="_blank" rel="noopener">▶ 直近の配信</a>`;
-      body = `<div class="offline-text">配信していません${err}</div>
+      body = `<div class="offline-text">配信していません${err}
+        ${m.game ? `<span class="offline-game">／ ${esc(m.game)}</span>` : ""}
+      </div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${links}</div>`;
     }
     return `<div class="member-card ${m.live ? "live" : ""}">
@@ -389,8 +409,31 @@ function startCountdown() {
   }, 1000);
 }
 
+function updateEventBanner() {
+  if (!CONFIG.eventDate) return;
+  const banner = document.getElementById("event-banner");
+  const now    = new Date();
+  const event  = new Date(CONFIG.eventDate + "T00:00:00");
+  const diffMs = event - now;
+  const diffD  = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  document.getElementById("event-name-label").textContent = CONFIG.eventName || "大会本番";
+  document.getElementById("event-date-label").textContent = CONFIG.eventDate.replace(/-/g, "/");
+  banner.style.display = "flex";
+
+  const countEl = document.getElementById("event-count-display");
+  if (diffD > 0) {
+    countEl.innerHTML = `<div class="event-count">${diffD}<span>日後</span></div>`;
+  } else if (diffD === 0) {
+    countEl.innerHTML = `<div class="event-today">🎉 本日開催！</div>`;
+  } else {
+    countEl.innerHTML = `<div class="event-done">開催済み（${Math.abs(diffD)}日前）</div>`;
+  }
+}
+
 async function refresh() {
   startCountdown();
+  updateEventBanner();
   const [members] = await Promise.all([fetchAllStatuses(), fetchAnnouncements()]);
   renderMembers(members);
 }
