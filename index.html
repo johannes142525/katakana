@@ -135,9 +135,9 @@ const CONFIG = {
 
   // Cloudflare WorkerをデプロイしたらそのURLに変更する
   // 例: "https://rta-dashboard.yourname.workers.dev"
-  workerUrl: "https://johannes.johannes142525.workers.dev",
+  workerUrl: "https://ここにWorkerのURLを貼る",
 
-  refreshInterval: 3600, // 1時間 // 5分
+  refreshInterval: 300, // 5分（ニコ生検知用。YouTube はPubSubで即時反映） // 5分
 
   // YouTubeメンバーのiconUrl: チャンネルページのアイコンを右クリック or 開発者ツールで取得したURLを貼る
   // ニコニコメンバーはuserIdから自動生成するので不要
@@ -197,15 +197,41 @@ async function fetchMemberStatus(m) {
 }
 
 async function fetchAllStatuses() {
-  const statuses = await Promise.all(CONFIG.members.map(fetchMemberStatus));
-  // ニコニコメンバーのアイコンURLをCDNから直接計算（floor(userId/10000)）
+  // YouTube: KVから一括取得（APIコストゼロ、PubSubで即時更新済み）
+  let ytData = {};
+  try {
+    const ytRes = await fetch(`${CONFIG.workerUrl}/status`, { signal: AbortSignal.timeout(8000) });
+    const json  = await ytRes.json();
+    ytData = json.youtube || {};
+  } catch(e) { /* 取得失敗時は空のまま */ }
+
+  // 各メンバーのステータスを組み立て
+  const statuses = await Promise.all(CONFIG.members.map(async (m) => {
+    if (m.platform === "youtube") {
+      const yt = ytData[m.channelHandle] || {};
+      return {
+        ...m,
+        live:       yt.live    || false,
+        title:      yt.title   || null,
+        url:        yt.url     || `https://www.youtube.com/${m.channelHandle}`,
+        iconUrl:    yt.iconUrl || m.iconUrl || null,
+        chUrl:      `https://www.youtube.com/${m.channelHandle}`,
+        streamsUrl: `https://www.youtube.com/${m.channelHandle}/streams`,
+      };
+    } else {
+      // ニコ生: 既存のスクレイピング
+      return fetchMemberStatus(m);
+    }
+  }));
+
+  // ニコニコのアイコンURLを計算
   statuses.forEach(m => {
     if (m.platform === "niconico" && !m.iconUrl) {
       const dir = Math.floor(parseInt(m.userId) / 10000);
       m.iconUrl = `https://secure-dcdn.cdn.nimg.jp/nicoaccount/usericon/${dir}/${m.userId}.jpg`;
     }
-    // YouTubeメンバーはCONFIGのiconUrlを使用（APIで取得できた場合はそちらを優先）
   });
+
   return statuses;
 }
 
