@@ -135,9 +135,9 @@ const CONFIG = {
 
   // Cloudflare WorkerをデプロイしたらそのURLに変更する
   // 例: "https://rta-dashboard.yourname.workers.dev"
-  workerUrl: "https://johannes.johannes142525.workers.dev",
+  workerUrl: "https://ここにWorkerのURLを貼る", // 管理画面(admin.html)から自動設定されます
 
-  refreshInterval: 300, // 5分（ニコ生検知用。YouTube はPubSubで即時反映） // 5分
+  refreshInterval: 60, // 1分（ニコ生検知用。YouTube はPubSubで即時反映） // 5分
 
   // YouTubeメンバーのiconUrl: チャンネルページのアイコンを右クリック or 開発者ツールで取得したURLを貼る
   // ニコニコメンバーはuserIdから自動生成するので不要
@@ -197,13 +197,29 @@ async function fetchMemberStatus(m) {
 }
 
 async function fetchAllStatuses() {
-  // YouTube: KVから一括取得（APIコストゼロ、PubSubで即時更新済み）
+  // KVから設定とYouTubeステータスを並行取得
+  const [cfgRes, statusRes] = await Promise.allSettled([
+    fetch(`${CONFIG.workerUrl}/config/get`, { signal: AbortSignal.timeout(8000) }),
+    fetch(`${CONFIG.workerUrl}/status`,     { signal: AbortSignal.timeout(8000) }),
+  ]);
+
+  // 設定をKVから取得してCONFIGに反映（チーム名・メンバーリスト）
+  if (cfgRes.status === "fulfilled" && cfgRes.value.ok) {
+    const remoteCfg = await cfgRes.value.json();
+    if (remoteCfg.teamName) {
+      CONFIG.teamName = remoteCfg.teamName;
+      CONFIG.members  = remoteCfg.members;
+      document.getElementById("team-logo").textContent = `${CONFIG.teamName} 配信ダッシュボード`;
+      document.title = `${CONFIG.teamName} 配信ダッシュボード`;
+    }
+  }
+
+  // YouTubeのライブ状態をKVから取得（APIコストゼロ）
   let ytData = {};
-  try {
-    const ytRes = await fetch(`${CONFIG.workerUrl}/status`, { signal: AbortSignal.timeout(8000) });
-    const json  = await ytRes.json();
+  if (statusRes.status === "fulfilled" && statusRes.value.ok) {
+    const json = await statusRes.value.json();
     ytData = json.youtube || {};
-  } catch(e) { /* 取得失敗時は空のまま */ }
+  }
 
   // 各メンバーのステータスを組み立て
   const statuses = await Promise.all(CONFIG.members.map(async (m) => {
@@ -219,7 +235,6 @@ async function fetchAllStatuses() {
         streamsUrl: `https://www.youtube.com/${m.channelHandle}/streams`,
       };
     } else {
-      // ニコ生: 既存のスクレイピング
       return fetchMemberStatus(m);
     }
   }));

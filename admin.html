@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ダッシュボード 管理画面</title>
+<style>
+:root{--bg:#0d0c1d;--bg2:#13122a;--card:#1a1835;--card-h:#221f42;--border:rgba(255,255,255,0.07);--text:#eeecfc;--muted:#8885aa;--dim:#4e4c6a;--purple:#7c6af7;--purple2:rgba(124,106,247,0.18);--live:#22c55e;--radius:12px;--danger:#ef4444}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,"Hiragino Sans","Yu Gothic UI",Meiryo,sans-serif;font-size:14px;min-height:100vh}
+header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:16px;font-weight:700;background:linear-gradient(135deg,#a78bfa,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+main{max-width:800px;margin:0 auto;padding:28px 20px 60px}
+h2{font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+input,select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:14px;font-family:inherit;outline:none}
+input:focus,select:focus{border-color:var(--purple)}
+.field{margin-bottom:14px}
+.row{display:grid;gap:10px;margin-bottom:10px;align-items:center}
+.row-nico{grid-template-columns:1fr 1fr 2fr 2fr auto}
+.row-yt  {grid-template-columns:1fr 1fr 2fr 2fr 2fr auto}
+.row-head{font-size:11px;color:var(--muted);display:grid;gap:10px;margin-bottom:6px;padding:0 2px}
+.row-head-nico{grid-template-columns:1fr 1fr 2fr 2fr auto}
+.row-head-yt  {grid-template-columns:1fr 1fr 2fr 2fr 2fr auto}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:opacity .15s}
+.btn:hover{opacity:.85}
+.btn-primary{background:var(--purple);color:#fff}
+.btn-danger{background:var(--danger);color:#fff;padding:5px 10px;font-size:12px}
+.btn-add{background:var(--card-h);color:var(--text);border:1px solid var(--border);width:100%;margin-top:8px}
+.btn-save{background:var(--live);color:#000;font-size:14px;padding:10px 28px;width:100%}
+.tab-row{display:flex;gap:8px;margin-bottom:14px}
+.tab{padding:5px 16px;border-radius:20px;font-size:12px;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer}
+.tab.active{background:var(--purple2);border-color:var(--purple);color:var(--text)}
+.login-wrap{max-width:360px;margin:80px auto;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:32px}
+.login-wrap h2{text-align:center;margin-bottom:24px;font-size:18px}
+.msg{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px}
+.msg.ok{background:rgba(34,197,94,.15);color:#86efac}
+.msg.err{background:rgba(239,68,68,.15);color:#fca5a5}
+.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+.small{font-size:11px;color:var(--dim);margin-top:4px}
+#loading{text-align:center;padding:60px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">⚙ ダッシュボード 管理画面</span>
+  <span id="header-team" style="font-size:13px;color:var(--muted)"></span>
+</header>
+
+<!-- ログイン画面 -->
+<div id="login-view">
+  <div class="login-wrap">
+    <h2>🔐 管理画面ログイン</h2>
+    <div id="login-msg"></div>
+    <div class="field">
+      <label>Worker URL</label>
+      <input id="worker-url" type="url" placeholder="https://xxxx.workers.dev" value="">
+    </div>
+    <div class="field">
+      <label>管理パスワード（ADMIN_SECRET）</label>
+      <input id="secret-input" type="password" placeholder="worker_v5.jsに設定した文字列">
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="login()">ログイン</button>
+    <div class="small" style="margin-top:12px;text-align:center">Worker URLとパスワードはブラウザに保存されます</div>
+  </div>
+</div>
+
+<!-- メイン画面 -->
+<div id="main-view" style="display:none">
+  <div id="loading">設定を読み込み中…</div>
+  <main id="editor" style="display:none">
+
+    <div id="save-msg"></div>
+
+    <!-- チーム設定 -->
+    <div class="section">
+      <h2>🏁 チーム設定</h2>
+      <div class="field">
+        <label>チーム名</label>
+        <input id="team-name" type="text" placeholder="例：カタカナ">
+      </div>
+    </div>
+
+    <!-- メンバー管理 -->
+    <div class="section">
+      <h2>👥 メンバー管理</h2>
+      <div class="tab-row">
+        <button class="tab active" onclick="switchTab('niconico',this)">ニコ生メンバー</button>
+        <button class="tab" onclick="switchTab('youtube',this)">YouTubeメンバー</button>
+      </div>
+
+      <!-- ニコ生 -->
+      <div id="tab-niconico">
+        <div class="row-head row-head-nico">
+          <span>名前</span><span>担当作品</span><span>ユーザーID</span><span>（ユーザーページURL）</span><span></span>
+        </div>
+        <div id="nico-members"></div>
+        <button class="btn btn-add" onclick="addMember('niconico')">＋ ニコ生メンバーを追加</button>
+      </div>
+
+      <!-- YouTube -->
+      <div id="tab-youtube" style="display:none">
+        <div class="row-head row-head-yt">
+          <span>名前</span><span>担当作品</span><span>チャンネル（@〜）</span><span>アイコンURL</span><span>（チャンネルURL）</span><span></span>
+        </div>
+        <div id="yt-members"></div>
+        <button class="btn btn-add" onclick="addMember('youtube')">＋ YouTubeメンバーを追加</button>
+      </div>
+    </div>
+
+    <hr class="divider">
+    <button class="btn btn-save" onclick="saveConfig()">💾 保存して反映する</button>
+    <div class="small" style="text-align:center;margin-top:10px">保存するとPubSub購読も自動で更新されます</div>
+
+  </main>
+</div>
+
+<script>
+let WORKER_URL = "";
+let SECRET     = "";
+let config     = { teamName:"", members:[] };
+
+// ── ログイン ─────────────────────────────────────────────────
+async function login() {
+  WORKER_URL = document.getElementById("worker-url").value.trim().replace(/\/$/, "");
+  SECRET     = document.getElementById("secret-input").value.trim();
+  if (!WORKER_URL || !SECRET) { showMsg("login-msg", "両方入力してください", "err"); return; }
+
+  localStorage.setItem("workerUrl", WORKER_URL);
+  localStorage.setItem("secret",    SECRET);
+
+  document.getElementById("login-view").style.display = "none";
+  document.getElementById("main-view").style.display  = "block";
+  await loadConfig();
+}
+
+// ── 設定読み込み ─────────────────────────────────────────────
+async function loadConfig() {
+  try {
+    const r = await fetch(`${WORKER_URL}/config/get`);
+    config  = await r.json();
+    renderAll();
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("editor").style.display  = "block";
+    document.getElementById("header-team").textContent = config.teamName;
+  } catch(e) {
+    document.getElementById("loading").textContent = "設定の読み込みに失敗しました。Worker URLを確認してください。";
+  }
+}
+
+// ── 描画 ─────────────────────────────────────────────────────
+function renderAll() {
+  document.getElementById("team-name").value = config.teamName || "";
+  renderMembers();
+}
+
+function renderMembers() {
+  const nicos = config.members.filter(m => m.platform === "niconico");
+  const yts   = config.members.filter(m => m.platform === "youtube");
+
+  document.getElementById("nico-members").innerHTML = nicos.map((m, i) => {
+    const gi = config.members.indexOf(m);
+    return `<div class="row row-nico" data-idx="${gi}">
+      <input type="text" placeholder="名前" value="${esc(m.name)}" onchange="updateMember(${gi},'name',this.value)">
+      <input type="text" placeholder="担当作品" value="${esc(m.game)}" onchange="updateMember(${gi},'game',this.value)">
+      <input type="text" placeholder="例：36994719" value="${esc(m.userId)}" onchange="updateMember(${gi},'userId',this.value)">
+      <input type="text" readonly value="https://live.nicovideo.jp/watch/user/${esc(m.userId)}" style="color:var(--dim);font-size:11px">
+      <button class="btn btn-danger" onclick="removeMember(${gi})">削除</button>
+    </div>`;
+  }).join("");
+
+  document.getElementById("yt-members").innerHTML = yts.map((m, i) => {
+    const gi = config.members.indexOf(m);
+    return `<div class="row row-yt" data-idx="${gi}">
+      <input type="text" placeholder="名前" value="${esc(m.name)}" onchange="updateMember(${gi},'name',this.value)">
+      <input type="text" placeholder="担当作品" value="${esc(m.game)}" onchange="updateMember(${gi},'game',this.value)">
+      <input type="text" placeholder="@channelName" value="${esc(m.channelHandle||'')}" onchange="updateMember(${gi},'channelHandle',this.value)">
+      <input type="text" placeholder="アイコン画像URL（省略可）" value="${esc(m.iconUrl||'')}" onchange="updateMember(${gi},'iconUrl',this.value)">
+      <input type="text" readonly value="https://www.youtube.com/${esc(m.channelHandle||'')}" style="color:var(--dim);font-size:11px">
+      <button class="btn btn-danger" onclick="removeMember(${gi})">削除</button>
+    </div>`;
+  }).join("");
+}
+
+function updateMember(idx, key, val) {
+  config.members[idx][key] = val;
+  // ニコ生URLプレビューを更新
+  if (key === "userId") {
+    const row = document.querySelector(`[data-idx="${idx}"]`);
+    if (row) {
+      const preview = row.querySelectorAll("input")[3];
+      if (preview && preview.readOnly) preview.value = `https://live.nicovideo.jp/watch/user/${val}`;
+    }
+  }
+  if (key === "channelHandle") {
+    const row = document.querySelector(`[data-idx="${idx}"]`);
+    if (row) {
+      const preview = row.querySelectorAll("input")[4];
+      if (preview && preview.readOnly) preview.value = `https://www.youtube.com/${val}`;
+    }
+  }
+}
+
+function addMember(platform) {
+  if (platform === "niconico") {
+    config.members.push({ name:"", game:"", platform:"niconico", userId:"" });
+  } else {
+    config.members.push({ name:"", game:"", platform:"youtube", channelHandle:"", iconUrl:"" });
+  }
+  renderMembers();
+}
+
+function removeMember(idx) {
+  if (!confirm("このメンバーを削除しますか？")) return;
+  config.members.splice(idx, 1);
+  renderMembers();
+}
+
+// ── タブ切り替え ─────────────────────────────────────────────
+function switchTab(tab, btn) {
+  document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById("tab-niconico").style.display = tab === "niconico" ? "block" : "none";
+  document.getElementById("tab-youtube").style.display  = tab === "youtube"  ? "block" : "none";
+}
+
+// ── 保存 ─────────────────────────────────────────────────────
+async function saveConfig() {
+  config.teamName = document.getElementById("team-name").value.trim();
+  if (!config.teamName) { showMsg("save-msg", "チーム名を入力してください", "err"); return; }
+
+  const btn = document.querySelector(".btn-save");
+  btn.textContent = "保存中…";
+  btn.disabled    = true;
+
+  try {
+    const r = await fetch(`${WORKER_URL}/config/set?secret=${encodeURIComponent(SECRET)}`, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(config),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      showMsg("save-msg", "✅ 保存しました！ダッシュボードに反映されます。", "ok");
+      document.getElementById("header-team").textContent = config.teamName;
+    } else {
+      showMsg("save-msg", `エラー: ${d.error || "不明なエラー"}`, "err");
+    }
+  } catch(e) {
+    showMsg("save-msg", `通信エラー: ${e.message}`, "err");
+  }
+  btn.textContent = "💾 保存して反映する";
+  btn.disabled    = false;
+}
+
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.className = `msg ${type}`;
+  el.textContent = text;
+  setTimeout(() => { el.textContent = ""; el.className = ""; }, 5000);
+}
+
+function esc(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+// ── 初期化 ───────────────────────────────────────────────────
+const savedUrl    = localStorage.getItem("workerUrl");
+const savedSecret = localStorage.getItem("secret");
+if (savedUrl && savedSecret) {
+  document.getElementById("worker-url").value   = savedUrl;
+  document.getElementById("secret-input").value = savedSecret;
+}
+</script>
+</body>
+</html>
