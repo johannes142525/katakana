@@ -40,6 +40,11 @@ main{max-width:960px;margin:0 auto;padding:28px 20px 60px}
 .avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .card-info{flex:1;min-width:0}
 .member-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.member-name-row{display:flex;align-items:baseline;gap:7px;min-width:0}
+.member-game{font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1}
+.last-stream{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--dim)}
+.last-stream a{color:var(--muted);text-decoration:none;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.last-stream a:hover{color:var(--text)}
 .platform-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;margin-top:3px;letter-spacing:.03em}
 .badge-yt{background:rgba(239,68,68,.15);color:#fca5a5}
 .badge-nc{background:rgba(249,115,22,.15);color:#fdba74}
@@ -183,6 +188,7 @@ function avatarColor(name){let h=0;for(const c of name)h=(h*31+c.charCodeAt(0))&
 function initials(name){return name.slice(0,2)}
 function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
 function linkify(s){return esc(s).replace(/(https?:\/\/[^\s&<>"]+)/g,'<a href="$1" target="_blank" rel="noopener" style="color:var(--purple);text-decoration:underline;text-underline-offset:2px">$1</a>')}
+function truncate(s, n){return s && s.length > n ? s.slice(0,n)+"…" : (s||"")}
 
 /* ── Worker経由でステータス取得 ── */
 async function fetchMemberStatus(m) {
@@ -263,6 +269,22 @@ async function fetchAllStatuses() {
     }
   }));
 
+  // ニコ生の直近配信をWorker経由で取得（オフライン時のみ）
+  await Promise.all(statuses.map(async (m) => {
+    if (m.platform === "niconico" && !m.live) {
+      try {
+        const r = await fetch(`${CONFIG.workerUrl}/nico/last?userId=${encodeURIComponent(m.userId)}`, { signal: AbortSignal.timeout(8000) });
+        const d = await r.json();
+        if (d.title) m.lastStream = d;
+      } catch(e) {}
+    }
+    // YouTubeの直近配信はKVから/statusで既に取得済み
+    if (m.platform === "youtube" && !m.live) {
+      const yt = ytData[m.channelHandle] || {};
+      if (yt.lastStream) m.lastStream = yt.lastStream;
+    }
+  }));
+
   // ニコニコのアイコンURLを計算
   statuses.forEach(m => {
     if (m.platform === "niconico" && !m.iconUrl) {
@@ -312,16 +334,22 @@ function renderMembers(members) {
            <a class="ch-link" href="${esc(m.streamsUrl)}" target="_blank" rel="noopener">🎬 配信一覧</a>`
         : `<a class="ch-link" href="${esc(m.chUrl)}" target="_blank" rel="noopener">↗ ユーザーページ</a>
            <a class="ch-link" href="${esc(m.liveUrl)}" target="_blank" rel="noopener">▶ 直近の配信</a>`;
-      body = `<div class="offline-text">配信していません${err}
-        ${m.game ? `<span class="offline-game">／ ${esc(m.game)}</span>` : ""}
-      </div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${links}</div>`;
+      const lastHtml = m.lastStream
+        ? `<div class="last-stream">直近: ${esc(m.lastStream.date)}<a href="${esc(m.lastStream.url)}" target="_blank" rel="noopener" title="${esc(m.lastStream.title)}">${esc(truncate(m.lastStream.title, 32))}</a></div>`
+        : "";
+      body = `<div class="offline-text">配信していません${err}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${links}</div>
+        ${lastHtml}`;
     }
     return `<div class="member-card ${m.live ? "live" : ""}">
       <div class="card-row1">
         ${avatarHtml}
         <div class="card-info">
-          <div class="member-name">${esc(m.name)}</div>${platBadge}
+          <div class="member-name-row">
+            <div class="member-name">${esc(m.name)}</div>
+            ${m.game ? `<div class="member-game">${esc(m.game)}</div>` : ""}
+          </div>
+          ${platBadge}
         </div>
         <div class="live-dot-wrap">
           <div class="live-dot ${m.live ? "on" : "off"}"></div>
