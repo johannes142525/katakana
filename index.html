@@ -150,13 +150,13 @@ const CONFIG = {
 
   // Cloudflare WorkerをデプロイしたらそのURLに変更する
   // 例: "https://rta-dashboard.yourname.workers.dev"
-  workerUrl: "https://johannes.johannes142525.workers.dev",
+  workerUrl: "https://ここにWorkerのURLを貼る",
 
   refreshInterval: 60, // 1分（ニコ生検知用。YouTube はPubSubで即時反映）
 
   // 大会本番日程（"YYYY-MM-DD" 形式。不要な場合は null に）
-  eventDate: "2026-10-10",
-  eventName: "DQRTA身内大会本番まで", 
+  eventDate: "2026-06-01",
+  eventName: "大会本番", // 5分
 
   // YouTubeメンバーのiconUrl: チャンネルページのアイコンを右クリック or 開発者ツールで取得したURLを貼る
   // ニコニコメンバーはuserIdから自動生成するので不要
@@ -181,6 +181,7 @@ const AVATAR_COLORS = [
 function avatarColor(name){let h=0;for(const c of name)h=(h*31+c.charCodeAt(0))&0xffff;return AVATAR_COLORS[h%AVATAR_COLORS.length]}
 function initials(name){return name.slice(0,2)}
 function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function linkify(s){return esc(s).replace(/(https?:\/\/[^\s&<>"]+)/g,'<a href="$1" target="_blank" rel="noopener" style="color:var(--purple);text-decoration:underline;text-underline-offset:2px">$1</a>')}
 
 /* ── Worker経由でステータス取得 ── */
 async function fetchMemberStatus(m) {
@@ -372,7 +373,7 @@ function renderAnnouncements(ann, filterType="all") {
           <div class="ann-title">${esc(a.title)}</div>
           ${when ? `<div class="ann-when">${esc(when)}</div>` : ""}
         </div>
-        ${a.desc ? `<div class="ann-desc">${esc(a.desc)}</div>` : ""}
+        ${a.desc ? `<div class="ann-desc">${linkify(a.desc)}</div>` : ""}
         <div class="ann-meta">
           <span class="tag ${isTeam ? "tag-team" : "tag-personal"}">${isTeam ? "チーム" : "個人"}</span>
           ${a.runner ? `<span class="tag-runner">👤 ${esc(a.runner)}</span>` : ""}
@@ -423,7 +424,7 @@ function updateEventBanner() {
 
   const countEl = document.getElementById("event-count-display");
   if (diffD > 0) {
-    countEl.innerHTML = `<div class="event-count">${diffD}<span>日</span></div>`;
+    countEl.innerHTML = `<div class="event-count">${diffD}<span>日後</span></div>`;
   } else if (diffD === 0) {
     countEl.innerHTML = `<div class="event-today">🎉 本日開催！</div>`;
   } else {
