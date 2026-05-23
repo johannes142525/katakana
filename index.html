@@ -428,7 +428,7 @@ function updateEventBanner() {
 
   const countEl = document.getElementById("event-count-display");
   if (diffD > 0) {
-    countEl.innerHTML = `<div class="event-count">${diffD}<span>日後</span></div>`;
+    countEl.innerHTML = `<div class="event-count"><span>まで</span>${diffD}<span>日</span></div>`;
   } else if (diffD === 0) {
     countEl.innerHTML = `<div class="event-today">🎉 本日開催！</div>`;
   } else {
@@ -438,9 +438,9 @@ function updateEventBanner() {
 
 async function refresh() {
   startCountdown();
-  updateEventBanner();
   const [members] = await Promise.all([fetchAllStatuses(), fetchAnnouncements()]);
   renderMembers(members);
+  updateEventBanner(); // 設定読み込み後に実行
 }
 
 document.getElementById("team-logo").textContent = `${CONFIG.teamName} 配信ダッシュボード`;
