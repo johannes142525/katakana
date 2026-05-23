@@ -148,14 +148,15 @@ footer{text-align:center;font-size:11px;color:var(--dim);padding:24px}
 const CONFIG = {
   teamName: "DQRTAチーム",
 
-  // Cloudflare WorkerをデプロイしたらそのURLに変更する
-  // 例: "https://rta-dashboard.yourname.workers.dev"
-  workerUrl: "https://johannes.johannes142525.workers.dev",
+  // Worker URL: admin.htmlにログインすると自動設定されます
+  // 未設定の場合のみここに直接入力してください
+  workerUrl: localStorage.getItem("workerUrl") || "https://ここにWorkerのURLを貼る",
 
   refreshInterval: 60, // 1分（ニコ生検知用。YouTube はPubSubで即時反映）
 
-  // 大会本番日程（"YYYY-MM-DD" 形式。不要な場合は null に）
-  eventDate: "2026-06-01",
+  // 大会日程はKVから自動取得されます（管理画面で設定してください）
+  // 管理画面未使用の場合のみここに直接入力してください
+  eventDate: null,
   eventName: "大会本番", // 5分
 
   // YouTubeメンバーのiconUrl: チャンネルページのアイコンを右クリック or 開発者ツールで取得したURLを貼る
@@ -232,6 +233,9 @@ async function fetchAllStatuses() {
       document.getElementById("team-logo").textContent = `${CONFIG.teamName} 配信ダッシュボード`;
       document.title = `${CONFIG.teamName} 配信ダッシュボード`;
     }
+    // 大会日程をKVから反映
+    if (remoteCfg.eventDate !== undefined) CONFIG.eventDate = remoteCfg.eventDate;
+    if (remoteCfg.eventName !== undefined) CONFIG.eventName = remoteCfg.eventName;
   }
 
   // YouTubeのライブ状態をKVから取得（APIコストゼロ）
