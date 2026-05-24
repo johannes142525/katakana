@@ -32,10 +32,11 @@ main{max-width:960px;margin:0 auto;padding:28px 20px 60px}
 .stat-card .lbl{font-size:11px;color:var(--muted);margin-top:2px}
 .member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:40px}
 .member-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;transition:background .15s;position:relative;overflow:hidden}
+.card-bg-text{position:absolute;bottom:-8px;right:-4px;font-size:42px;font-weight:900;white-space:nowrap;letter-spacing:-1px;pointer-events:none;line-height:1;z-index:0;user-select:none;font-style:italic}
 .member-card.live{border-color:rgba(34,197,94,.35)}
 .member-card.live::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--live),#4ade80)}
 .member-card:hover{background:var(--card-h)}
-.card-row1{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.card-row1{display:flex;align-items:center;gap:12px;margin-bottom:12px;position:relative;z-index:2}
 .avatar{width:40px;height:40px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;overflow:hidden}
 .avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .card-info{flex:1;min-width:0}
@@ -56,17 +57,17 @@ main{max-width:960px;margin:0 auto;padding:28px 20px 60px}
 .live-label{font-size:11px;font-weight:700}
 .live-label.on{color:var(--live)}
 .live-label.off{color:var(--dim)}
-.stream-box{border-top:1px solid var(--border);padding-top:10px}
+.stream-box{border-top:1px solid var(--border);padding-top:10px;position:relative;z-index:2}
 .stream-title{font-size:13px;color:var(--text);line-height:1.4;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .stream-meta{display:flex;justify-content:space-between;align-items:center}
 .game-name{font-size:11px;color:var(--muted)}
 .viewer-ct{font-size:12px;font-weight:600;color:var(--live)}
-.watch-link{display:inline-flex;align-items:center;gap:5px;margin-top:10px;font-size:12px;font-weight:600;color:var(--live);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:5px 12px;transition:background .15s}
+.watch-link{display:inline-flex;align-items:center;gap:5px;margin-top:10px;font-size:12px;font-weight:600;color:var(--live);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:5px 12px;transition:background .15s;background:#1a1835;position:relative;z-index:2}
 .watch-link:hover{background:var(--live2)}
-.offline-text{font-size:12px;color:var(--dim);padding-top:10px;border-top:1px solid var(--border)}
+.offline-text{font-size:12px;color:var(--dim);padding-top:10px;border-top:1px solid var(--border);position:relative;z-index:2}
 .offline-game{color:var(--muted);margin-left:4px}
-.ch-link{display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:11px;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:3px 8px}
-.ch-link:hover{color:var(--text);background:var(--card-h)}
+.ch-link{display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:11px;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:3px 8px;background:#1a1835;position:relative;z-index:2}
+.ch-link:hover{color:var(--text);background:#221f42}
 .filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
 .filter-btn{font-size:12px;padding:4px 14px;border-radius:20px;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .15s}
 .filter-btn:hover{border-color:var(--purple);color:var(--purple)}
@@ -341,13 +342,16 @@ function renderMembers(members) {
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${links}</div>
         ${lastHtml}`;
     }
+    const bgColor = m.platform === "youtube"
+      ? "rgba(239,68,68,0.1)"
+      : "rgba(249,115,22,0.1)";
     return `<div class="member-card ${m.live ? "live" : ""}">
+      <div class="card-bg-text" style="color:${bgColor}">${esc(m.game || "")}</div>
       <div class="card-row1">
         ${avatarHtml}
         <div class="card-info">
           <div class="member-name-row">
             <div class="member-name">${esc(m.name)}</div>
-            ${m.game ? `<div class="member-game">${esc(m.game)}</div>` : ""}
           </div>
           ${platBadge}
         </div>
