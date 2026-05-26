@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RTAチーム 配信ダッシュボード</title>
+<style>
+:root {
+  --bg:#0d0c1d;--bg2:#13122a;--card:#1a1835;--card-h:#221f42;
+  --border:rgba(255,255,255,0.07);--text:#eeecfc;--muted:#8885aa;--dim:#4e4c6a;
+  --purple:#7c6af7;--purple2:rgba(124,106,247,0.18);
+  --live:#22c55e;--live2:rgba(34,197,94,0.14);
+  --yt:#ef4444;--nc:#f97316;--radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,"Hiragino Sans","Yu Gothic UI",Meiryo,sans-serif;font-size:14px;line-height:1.6;min-height:100vh}
+a{color:inherit;text-decoration:none}
+header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:10}
+.logo{font-size:16px;font-weight:700;letter-spacing:.04em;background:linear-gradient(135deg,#a78bfa,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header-meta{display:flex;align-items:center;gap:16px}
+.refresh-btn{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:8px;padding:5px 12px;cursor:pointer;transition:background .15s,color .15s}
+.refresh-btn:hover{background:var(--card);color:var(--text)}
+.countdown-text{font-size:12px;color:var(--dim)}
+main{max-width:960px;margin:0 auto;padding:28px 20px 60px}
+.section-hd{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.section-hd h2{font-size:15px;font-weight:600;letter-spacing:.02em}
+.section-hd .pill{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--live2);color:var(--live)}
+.stat-bar{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:28px}
+@media(max-width:600px){.stat-bar{grid-template-columns:1fr 1fr}}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px}
+.stat-card .num{font-size:22px;font-weight:700;color:var(--text)}
+.stat-card .num.green{color:var(--live)}
+.stat-card .lbl{font-size:11px;color:var(--muted);margin-top:2px}
+.member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:40px}
+.member-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;transition:background .15s;position:relative;overflow:hidden}
+.card-bg-text{position:absolute;bottom:-8px;right:-4px;font-size:42px;font-weight:900;white-space:nowrap;letter-spacing:-1px;pointer-events:none;line-height:1;z-index:0;user-select:none}
+.member-card.live{border-color:rgba(34,197,94,.35)}
+.member-card.live::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--live),#4ade80)}
+.member-card:hover{background:var(--card-h)}
+.card-row1{display:flex;align-items:center;gap:12px;margin-bottom:12px;position:relative;z-index:2}
+.avatar{width:40px;height:40px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.card-info{flex:1;min-width:0}
+.member-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.member-name-row{display:flex;align-items:baseline;gap:7px;min-width:0}
+.member-game{font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1}
+.last-stream{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--dim)}
+.last-stream a{color:var(--muted);text-decoration:none;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.last-stream a:hover{color:var(--text)}
+.platform-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;margin-top:3px;letter-spacing:.03em}
+.badge-yt{background:rgba(239,68,68,.15);color:#fca5a5}
+.badge-nc{background:rgba(249,115,22,.15);color:#fdba74}
+.live-dot-wrap{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.live-dot{width:8px;height:8px;border-radius:50%}
+.live-dot.on{background:var(--live);animation:pulse 1.8s ease-in-out infinite}
+.live-dot.off{background:var(--dim)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.5)}50%{box-shadow:0 0 0 5px rgba(34,197,94,0)}}
+.live-label{font-size:11px;font-weight:700}
+.live-label.on{color:var(--live)}
+.live-label.off{color:var(--dim)}
+.stream-box{border-top:1px solid var(--border);padding-top:10px;position:relative;z-index:2}
+.stream-title{font-size:13px;color:var(--text);line-height:1.4;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.stream-meta{display:flex;justify-content:space-between;align-items:center}
+.game-name{font-size:11px;color:var(--muted)}
+.viewer-ct{font-size:12px;font-weight:600;color:var(--live)}
+.watch-link{display:inline-flex;align-items:center;gap:5px;margin-top:10px;font-size:12px;font-weight:600;color:var(--live);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:5px 12px;transition:background .15s;background:#1a1835;position:relative;z-index:2}
+.watch-link:hover{background:var(--live2)}
+.offline-text{font-size:12px;color:var(--dim);padding-top:10px;border-top:1px solid var(--border);position:relative;z-index:2}
+.offline-game{color:var(--muted);margin-left:4px}
+.ch-link{display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:11px;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:3px 8px;background:#1a1835;position:relative;z-index:2}
+.ch-link:hover{color:var(--text);background:#221f42}
+.filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.filter-btn{font-size:12px;padding:4px 14px;border-radius:20px;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .15s}
+.filter-btn:hover{border-color:var(--purple);color:var(--purple)}
+.filter-btn.active{background:var(--purple2);border-color:var(--purple);color:var(--text)}
+.ann-list{display:flex;flex-direction:column;gap:10px}
+.ann-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;gap:14px}
+.ann-card.type-team{border-left:3px solid #a78bfa}
+.ann-card.type-personal{border-left:3px solid #34d399}
+.ann-icon{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px}
+.icon-team{background:rgba(167,139,250,.15);color:#c4b5fd}
+.icon-personal{background:rgba(52,211,153,.15);color:#6ee7b7}
+.ann-body{flex:1;min-width:0}
+.ann-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px}
+.ann-title{font-size:14px;font-weight:600}
+.ann-when{font-size:12px;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.ann-desc{font-size:13px;color:var(--muted);line-height:1.5}
+.ann-meta{display:flex;align-items:center;gap:8px;margin-top:7px;flex-wrap:wrap}
+.tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px}
+.tag-team{background:rgba(167,139,250,.15);color:#c4b5fd}
+.tag-personal{background:rgba(52,211,153,.15);color:#6ee7b7}
+.tag-runner{font-size:11px;color:var(--text)}
+.no-ann{font-size:13px;color:var(--dim);padding:20px 0;text-align:center}
+.section-gap{margin-bottom:36px}
+.loading-text{font-size:12px;color:var(--dim);animation:blink .8s ease-in-out infinite alternate}
+
+.event-name{font-size:13px;color:var(--muted)}
+.event-count{font-size:22px;font-weight:700;color:#a78bfa}
+.event-count span{font-size:13px;font-weight:400;color:var(--muted);margin-left:4px}
+.event-today{font-size:22px;font-weight:700;color:var(--live)}
+.event-done{font-size:14px;color:var(--dim)}
+@keyframes blink{from{opacity:.4}to{opacity:1}}
+footer{text-align:center;font-size:11px;color:var(--dim);padding:24px}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo" id="team-logo">RTAチーム 配信ダッシュボード</span>
+  <div class="header-meta">
+    <span class="countdown-text" id="last-updated">更新中…</span>
+    <button class="refresh-btn" onclick="refresh()">↺ 今すぐ更新</button>
+  </div>
+</header>
+<main>
+  <div class="section-gap">
+    <div class="section-hd">
+      <h2>📡 メンバー配信状況</h2>
+      <span class="pill" id="live-pill">確認中…</span>
+    </div>
+    <div class="stat-bar">
+      <div class="stat-card" id="event-banner" style="display:none;background:linear-gradient(135deg,rgba(124,106,247,0.12),rgba(96,165,250,0.07));border-color:rgba(124,106,247,0.25)">
+        <div class="event-name" id="event-name-label" style="font-size:12px;color:var(--muted);margin-bottom:4px"></div>
+        <div id="event-count-display"></div>
+        <div id="event-date-label" style="font-size:11px;color:var(--dim);margin-top:4px"></div>
+      </div>
+      <div class="stat-card"><div class="num green" id="stat-live">—</div><div class="lbl">配信中</div></div>
+      <div class="stat-card"><div class="num" id="stat-members">—</div><div class="lbl">メンバー数</div></div>
+    </div>
+    <div class="member-grid" id="member-grid">
+      <div class="loading-text" style="padding:20px 0">配信状況を確認中…</div>
+    </div>
+  </div>
+  <div class="section-gap">
+    <div class="section-hd"><h2>📢 お知らせ・スケジュール</h2></div>
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="filterAnn('all',this)">すべて</button>
+      <button class="filter-btn" onclick="filterAnn('チーム',this)">チームイベント</button>
+      <button class="filter-btn" onclick="filterAnn('個人',this)">個人</button>
+    </div>
+    <div class="ann-list" id="ann-list">
+      <div class="loading-text" style="padding:20px 0">お知らせを読み込み中…</div>
+    </div>
+  </div>
+</main>
+<footer>© RTAチーム ダッシュボード</footer>
+
+<script>
+/* ================================================================
+   ★★★ 設定 — WorkerのURLだけ編集してください ★★★
+   ================================================================ */
+const CONFIG = {
+  teamName: "DQRTAチーム",
+
+  // Worker URL: admin.htmlにログインすると自動設定されます
+  // 未設定の場合のみここに直接入力してください
+  workerUrl: localStorage.getItem("workerUrl") || "https://ここにWorkerのURLを貼る",
+
+  refreshInterval: 60, // 1分（ニコ生検知用。YouTube はPubSubで即時反映）
+
+  // 大会日程はKVから自動取得されます（管理画面で設定してください）
+  // 管理画面未使用の場合のみここに直接入力してください
+  eventDate: null,
+  eventName: "大会本番", // 5分
+
+  // YouTubeメンバーのiconUrl: チャンネルページのアイコンを右クリック or 開発者ツールで取得したURLを貼る
+  // ニコニコメンバーはuserIdから自動生成するので不要
+  members: [
+    { name:"ヨハネス",   game:"ドラゴンクエストVII Reimagined", platform:"niconico", userId:"36994719" },
+    { name:"ユジン",     game:"HD-2D版 ドラゴンクエストI",      platform:"niconico", userId:"59165"    },
+    { name:"ラフ",       game:"ドラゴンクエストIV(FC)",          platform:"youtube",  channelHandle:"@rafu-RTA",
+      iconUrl:"https://yt3.googleusercontent.com/TYJrGjVpNIKRmFsq7uVmbL_xFmLIrl2oBxwIgGPndLCnBS4vppbbtbfQlGRFRgt3pUZxVbzQVQ=s160-c-k-c0x00ffffff-no-rj" },
+    { name:"ペテア",     game:"ドラゴンクエストVI(SFC)",         platform:"niconico", userId:"14147684" },
+    { name:"スッシィ",   game:"ドラゴンクエストV(SFC)",          platform:"youtube",  channelHandle:"@すっしぃ",
+      iconUrl:"https://yt3.googleusercontent.com/Xl3BiCAdbjvlqpp9ZImFATN3y4fr6Dtjd3nMkNmgCvujU_X9z5lX5elNGiG1Ksky-mER2PSg=s160-c-k-c0x00ffffff-no-rj" },
+    { name:"タイドノ",   game:"ドラゴンクエストII(SFC)",         platform:"niconico", userId:"39187"    },
+    { name:"ダイダマル",  game:"ドラゴンクエストIII(SFC)",       platform:"niconico", userId:"6793126"  },
+  ],
+};
+/* ================================================================ */
+
+const AVATAR_COLORS = [
+  ["#3730a3","#a5b4fc"],["#065f46","#6ee7b7"],["#7c2d12","#fca5a5"],
+  ["#6b21a8","#d8b4fe"],["#0c4a6e","#7dd3fc"],["#713f12","#fde68a"],["#4c1d95","#c4b5fd"],
+];
+function avatarColor(name){let h=0;for(const c of name)h=(h*31+c.charCodeAt(0))&0xffff;return AVATAR_COLORS[h%AVATAR_COLORS.length]}
+function initials(name){return name.slice(0,2)}
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function linkify(s){return esc(s).replace(/(https?:\/\/[^\s&<>"]+)/g,'<a href="$1" target="_blank" rel="noopener" style="color:var(--purple);text-decoration:underline;text-underline-offset:2px">$1</a>')}
+function truncate(s, n){return s && s.length > n ? s.slice(0,n)+"…" : (s||"")}
+
+/* ── Worker経由でステータス取得 ── */
+async function fetchMemberStatus(m) {
+  try {
+    let url;
+    if (m.platform === "youtube") {
+      url = `${CONFIG.workerUrl}/youtube/live?channelHandle=${encodeURIComponent(m.channelHandle)}`;
+    } else {
+      url = `${CONFIG.workerUrl}/nico/live?userId=${encodeURIComponent(m.userId)}`;
+    }
+    const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    const d = await r.json();
+
+    // プラットフォーム別URL群
+    const links = m.platform === "youtube"
+      ? {
+          chUrl:      `https://www.youtube.com/${m.channelHandle}`,
+          streamsUrl: `https://www.youtube.com/${m.channelHandle}/streams`,
+        }
+      : {
+          chUrl:   `https://www.nicovideo.jp/user/${m.userId}/live_programs?ref=watch_user_information`,
+          liveUrl: `https://live.nicovideo.jp/watch/user/${m.userId}`,
+        };
+
+    // iconUrl: APIで取得できた場合優先、なければCONFIG記載のURLを使用
+    return { ...m, ...links, ...d, iconUrl: d.iconUrl || m.iconUrl || null, url: d.url || links.liveUrl || links.chUrl };
+  } catch(e) {
+    const links = m.platform === "youtube"
+      ? { chUrl: `https://www.youtube.com/${m.channelHandle}`, streamsUrl: `https://www.youtube.com/${m.channelHandle}/streams` }
+      : { chUrl: `https://www.nicovideo.jp/user/${m.userId}/live_programs?ref=watch_user_information`, liveUrl: `https://live.nicovideo.jp/watch/user/${m.userId}` };
+    return { ...m, ...links, live: false, error: true, url: links.liveUrl || links.chUrl };
+  }
+}
+
+async function fetchAllStatuses() {
+  // KVから設定とYouTubeステータスを並行取得
+  const [cfgRes, statusRes] = await Promise.allSettled([
+    fetch(`${CONFIG.workerUrl}/config/get`, { signal: AbortSignal.timeout(8000) }),
+    fetch(`${CONFIG.workerUrl}/status`,     { signal: AbortSignal.timeout(8000) }),
+  ]);
+
+  // 設定をKVから取得してCONFIGに反映（チーム名・メンバーリスト）
+  if (cfgRes.status === "fulfilled" && cfgRes.value.ok) {
+    const remoteCfg = await cfgRes.value.json();
+    if (remoteCfg.teamName) {
+      CONFIG.teamName = remoteCfg.teamName;
+      CONFIG.members  = remoteCfg.members;
+      document.getElementById("team-logo").textContent = `${CONFIG.teamName} 配信ダッシュボード`;
+      document.title = `${CONFIG.teamName} 配信ダッシュボード`;
+    }
+    // 大会日程をKVから反映
+    if (remoteCfg.eventDate !== undefined) CONFIG.eventDate = remoteCfg.eventDate;
+    if (remoteCfg.eventName !== undefined) CONFIG.eventName = remoteCfg.eventName;
+  }
+
+  // YouTube・ニコ生のライブ状態をKVから一括取得
+  let ytData = {}, nicoData = {};
+  if (statusRes.status === "fulfilled" && statusRes.value.ok) {
+    const json = await statusRes.value.json();
+    ytData   = json.youtube  || {};
+    nicoData = json.niconico || {};
+  }
+
+  // 各メンバーのステータスを組み立て
+  const statuses = CONFIG.members.map(m => {
+    if (m.platform === "youtube") {
+      const yt = ytData[m.channelHandle] || {};
+      return {
+        ...m,
+        live:       yt.live       || false,
+        title:      yt.title      || null,
+        url:        yt.url        || `https://www.youtube.com/${m.channelHandle}`,
+        iconUrl:    yt.iconUrl    || m.iconUrl || null,
+        lastStream: yt.lastStream || null,
+        chUrl:      `https://www.youtube.com/${m.channelHandle}`,
+        streamsUrl: `https://www.youtube.com/${m.channelHandle}/streams`,
+      };
+    } else {
+      const nc = nicoData[m.userId] || {};
+      return {
+        ...m,
+        live:       nc.live       || false,
+        title:      nc.title      || null,
+        url:        nc.url        || `https://live.nicovideo.jp/watch/user/${m.userId}`,
+        lastStream: nc.lastStream || null,
+        chUrl:      `https://www.nicovideo.jp/user/${m.userId}/live_programs?ref=watch_user_information`,
+        liveUrl:    `https://live.nicovideo.jp/watch/user/${m.userId}`,
+      };
+    }
+  });
+
+  // ニコニコのアイコンURLを計算
+  statuses.forEach(m => {
+    if (m.platform === "niconico" && !m.iconUrl) {
+      const dir = Math.floor(parseInt(m.userId) / 10000);
+      m.iconUrl = `https://secure-dcdn.cdn.nimg.jp/nicoaccount/usericon/${dir}/${m.userId}.jpg`;
+    }
+  });
+
+  return statuses;
+}
+
+/* ── メンバーカード描画 ── */
+function renderMembers(members) {
+  const live = members.filter(m => m.live);
+  const offline = members.filter(m => !m.live);
+  const totalViewers = live.reduce((s,m) => s+(m.viewers||0), 0);
+  document.getElementById("stat-live").textContent = live.length;
+  document.getElementById("stat-members").textContent = members.length;
+  document.getElementById("live-pill").textContent = live.length > 0 ? `${live.length}人配信中` : "配信なし";
+
+  const sorted = [...live, ...offline];
+  document.getElementById("member-grid").innerHTML = sorted.map(m => {
+    const [bg,fg] = avatarColor(m.name);
+
+    // アバター：画像があれば表示、なければイニシャル
+    const iconUrl = m.iconUrl || null;
+    const avatarHtml = iconUrl
+      ? `<div class="avatar" data-bg="${bg}" data-fg="${fg}" data-init="${initials(m.name)}"><img src="${esc(iconUrl)}" alt="${esc(m.name)}" loading="lazy" onerror="var p=this.parentNode;p.innerHTML=p.dataset.init;p.style.background=p.dataset.bg;p.style.color=p.dataset.fg"></div>`
+      : `<div class="avatar" style="background:${bg};color:${fg}">${initials(m.name)}</div>`;
+
+    const platBadge = m.platform === "youtube"
+      ? `<span class="platform-badge badge-yt">▶ YouTube</span>`
+      : `<span class="platform-badge badge-nc">● ニコ生</span>`;
+    let body = "";
+    if (m.live) {
+      body = `<div class="stream-box">
+        ${m.title ? `<div class="stream-title">${esc(m.title)}</div>` : ""}
+        <div class="stream-meta">
+          ${m.viewers ? `<div class="viewer-ct">👥 ${m.viewers.toLocaleString()}</div>` : ""}
+        </div>
+        <a class="watch-link" href="${esc(m.url)}" target="_blank" rel="noopener">▶ 今すぐ視聴</a>
+      </div>`;
+    } else {
+      const err = m.error ? `<div style="font-size:11px;color:var(--dim);margin-top:4px">ステータス取得に失敗（リンクより確認）</div>` : "";
+      const links = m.platform === "youtube"
+        ? `<a class="ch-link" href="${esc(m.chUrl)}" target="_blank" rel="noopener">↗ チャンネル</a>
+           <a class="ch-link" href="${esc(m.streamsUrl)}" target="_blank" rel="noopener">🎬 配信一覧</a>`
+        : `<a class="ch-link" href="${esc(m.chUrl)}" target="_blank" rel="noopener">↗ ユーザーページ</a>
+           <a class="ch-link" href="${esc(m.liveUrl)}" target="_blank" rel="noopener">▶ 直近の配信</a>`;
+      const lastHtml = m.lastStream
+        ? `<div class="last-stream">直近: ${esc(m.lastStream.date)}<a href="${esc(m.lastStream.url)}" target="_blank" rel="noopener" title="${esc(m.lastStream.title)}">${esc(truncate(m.lastStream.title, 32))}</a></div>`
+        : "";
+      body = `<div class="offline-text">配信していません${err}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${links}</div>
+        ${lastHtml}`;
+    }
+    const bgColor = m.platform === "youtube"
+      ? "rgba(239,68,68,0.1)"
+      : "rgba(249,115,22,0.1)";
+    return `<div class="member-card ${m.live ? "live" : ""}">
+      <div class="card-bg-text" style="color:${bgColor}">${esc(m.game || "")}</div>
+      <div class="card-row1">
+        ${avatarHtml}
+        <div class="card-info">
+          <div class="member-name-row">
+            <div class="member-name">${esc(m.name)}</div>
+          </div>
+          ${platBadge}
+        </div>
+        <div class="live-dot-wrap">
+          <div class="live-dot ${m.live ? "on" : "off"}"></div>
+          <span class="live-label ${m.live ? "on" : "off"}">${m.live ? "LIVE" : "—"}</span>
+        </div>
+      </div>${body}
+    </div>`;
+  }).join("");
+}
+
+/* ── Sheets（Worker経由）── */
+async function fetchAnnouncements() {
+  try {
+    const r = await fetch(`${CONFIG.workerUrl}/sheets`, { cache:"no-store" });
+    const text = await r.text();
+    renderAnnouncements(parseCSV(text));
+  } catch(e) {
+    renderAnnouncements([]);
+  }
+}
+
+function parseCSV(text) {
+  const lines = text.replace(/\r/g,"").split("\n");
+  const result = [];
+  for (let i = 4; i < lines.length; i++) {
+    const row = splitCSVLine(lines[i]);
+    if (!row[0]) continue;
+    if (row[0].trim() !== "表示") continue;
+    result.push({ type:row[1]?.trim()||"", title:row[2]?.trim()||"", date:row[3]?.trim()||"", time:row[4]?.trim()||"", runner:row[5]?.trim()||"", desc:row[6]?.trim()||"" });
+  }
+  return result;
+}
+
+function splitCSVLine(line) {
+  const fields=[];let cur="";let inQ=false;
+  for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'){inQ=!inQ}else if(c===','&&!inQ){fields.push(cur);cur=""}else cur+=c}
+  fields.push(cur);return fields;
+}
+
+let allAnn = [];
+function renderAnnouncements(ann, filterType="all") {
+  allAnn = ann;
+  const filtered = filterType === "all" ? ann : ann.filter(a => a.type === filterType);
+  const list = document.getElementById("ann-list");
+  if (!filtered.length) { list.innerHTML = `<div class="no-ann">お知らせはありません</div>`; return; }
+  list.innerHTML = filtered.map(a => {
+    const isTeam = a.type === "チーム";
+    const when = [a.date, a.time].filter(Boolean).join(" ");
+    return `<div class="ann-card ${isTeam ? "type-team" : "type-personal"}">
+      <div class="ann-icon ${isTeam ? "icon-team" : "icon-personal"}">${isTeam ? "🏁" : "🎮"}</div>
+      <div class="ann-body">
+        <div class="ann-top">
+          <div class="ann-title">${esc(a.title)}</div>
+          ${when ? `<div class="ann-when">${esc(when)}</div>` : ""}
+        </div>
+        ${a.desc ? `<div class="ann-desc">${linkify(a.desc)}</div>` : ""}
+        <div class="ann-meta">
+          <span class="tag ${isTeam ? "tag-team" : "tag-personal"}">${isTeam ? "チーム" : "個人"}</span>
+          ${a.runner ? `<span class="tag-runner">👤 ${esc(a.runner)}</span>` : ""}
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function filterAnn(type, btn) {
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderAnnouncements(allAnn, type);
+}
+
+/* ── 自動更新 ── */
+let timer;
+function updateLastUpdated() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,"0");
+  const mm = String(now.getMinutes()).padStart(2,"0");
+  const el = document.getElementById("last-updated");
+  if (el) el.textContent = `最終更新: ${hh}:${mm}`;
+}
+
+function startCountdown() {
+  clearInterval(timer);
+  updateLastUpdated();
+  let s = CONFIG.refreshInterval;
+  timer = setInterval(() => {
+    if (document.hidden) return; // タブ非表示中は停止
+    s--;
+    if (s <= 0) refresh();
+  }, 1000);
+}
+
+function updateEventBanner() {
+  if (!CONFIG.eventDate) return;
+  const banner = document.getElementById("event-banner");
+  const now    = new Date();
+  const event  = new Date(CONFIG.eventDate + "T00:00:00");
+  const diffMs = event - now;
+  const diffD  = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  document.getElementById("event-name-label").textContent = CONFIG.eventName || "大会本番";
+  document.getElementById("event-date-label").textContent = CONFIG.eventDate.replace(/-/g, "/");
+  banner.style.display = "flex";
+
+  const countEl = document.getElementById("event-count-display");
+  if (diffD > 0) {
+    countEl.innerHTML = `<div class="event-count"><span>まで</span>${diffD}<span>日</span></div>`;
+  } else if (diffD === 0) {
+    countEl.innerHTML = `<div class="event-today">🎉 本日開催！</div>`;
+  } else {
+    countEl.innerHTML = `<div class="event-done">開催済み（${Math.abs(diffD)}日前）</div>`;
+  }
+}
+
+async function refresh() {
+  startCountdown();
+  const [members] = await Promise.all([fetchAllStatuses(), fetchAnnouncements()]);
+  renderMembers(members);
+  updateEventBanner(); // 設定読み込み後に実行
+}
+
+document.getElementById("team-logo").textContent = `${CONFIG.teamName} 配信ダッシュボード`;
+refresh();
+</script>
+</body>
+</html>
